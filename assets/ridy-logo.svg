@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563EB;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1D4ED8;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="road" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#10B981;stop-opacity:0.3" />
+    </linearGradient>
+  </defs>
+  
+  <!-- 배경 원형 -->
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  
+  <!-- 도로 -->
+  <path d="M80 340 Q180 280 256 300 Q332 320 432 260" stroke="white" stroke-width="40" fill="none" stroke-linecap="round" opacity="0.15"/>
+  <path d="M80 340 Q180 280 256 300 Q332 320 432 260" stroke="white" stroke-width="4" fill="none" stroke-linecap="round" stroke-dasharray="16 16" opacity="0.4"/>
+  
+  <!-- 차 아이콘 -->
+  <g transform="translate(160, 180)">
+    <!-- 차 몸체 -->
+    <rect x="20" y="40" width="140" height="60" rx="16" fill="white" opacity="0.95"/>
+    <!-- 차 지붕 -->
+    <path d="M50 40 L70 10 L130 10 L150 40" fill="white" opacity="0.95"/>
+    <!-- 창문 -->
+    <path d="M58 38 L74 14 L98 14 L98 38 Z" fill="#2563EB" opacity="0.6"/>
+    <path d="M104 14 L128 14 L144 38 L104 38 Z" fill="#2563EB" opacity="0.6"/>
+    <!-- 바퀴 -->
+    <circle cx="55" cy="100" r="16" fill="#1E3A5F"/>
+    <circle cx="55" cy="100" r="8" fill="#94A3B8"/>
+    <circle cx="125" cy="100" r="16" fill="#1E3A5F"/>
+    <circle cx="125" cy="100" r="8" fill="#94A3B8"/>
+  </g>
+  
+  <!-- 사람 아이콘 1 (운전자) -->
+  <g transform="translate(195, 195)">
+    <circle cx="0" cy="0" r="10" fill="#10B981"/>
+    <rect x="-6" y="12" width="12" height="14" rx="4" fill="#10B981"/>
+  </g>
+  
+  <!-- 사람 아이콘 2 (탑승자) -->
+  <g transform="translate(245, 195)">
+    <circle cx="0" cy="0" r="10" fill="#10B981"/>
+    <rect x="-6" y="12" width="12" height="14" rx="4" fill="#10B981"/>
+  </g>
+  
+  <!-- 연결 선 (매칭) -->
+  <g opacity="0.8">
+    <circle cx="300" cy="160" r="5" fill="#10B981"/>
+    <circle cx="320" cy="140" r="4" fill="#10B981" opacity="0.6"/>
+    <circle cx="335" cy="120" r="3" fill="#10B981" opacity="0.4"/>
+  </g>
+  
+  <!-- 하단 텍스트 -->
+  <text x="256" y="420" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="72" fill="white" letter-spacing="4">RIDY</text>
+  <text x="256" y="460" text-anchor="middle" font-family="Arial, sans-serif" font-weight="normal" font-size="20" fill="white" opacity="0.7" letter-spacing="6">함께 타는 길</text>
+</svg>
