@@ -2,12 +2,16 @@
 
 ## 아키텍처
 
-Ridy는 **기업 단위 폐쇄형 카풀 서비스**로, **GraphQL schema-first** 아키텍처를 사용한다.
+Ridy는 **기업 단위 폐쇄형 카풀 서비스**로, 외부 API는 **GraphQL Gateway + schema-first** 아키텍처를 사용한다.
 
-- **GraphQL 엔드포인트**: `POST https://api.ridy.dev/graphql`
-- **WebSocket (채팅)**: `wss://api.ridy.dev/chat?token=<access_token>`
+- **GraphQL Gateway**: `POST https://api.ridy.dev/graphql`
+- **Realtime Gateway**: `wss://api.ridy.dev/realtime`
 - **스키마 SSoT**: `backend/src/graphql/schema.graphql`
+- **Gateway API 계약**: [GRAPHQL_GATEWAY.md](./GRAPHQL_GATEWAY.md)
+- **MSA 서비스 경계**: [MSA.md](../architecture/MSA.md)
 - **타입 생성**: 양쪽 모두 `npm run codegen`으로 generated 타입 사용
+
+GraphQL은 클라이언트용 API 조합 계층으로 사용한다. 내부 서비스 간 통신은 GraphQL이 아니라 gRPC/internal HTTP와 이벤트 메시지를 사용한다.
 
 ## 핵심 개념
 
@@ -76,6 +80,7 @@ GraphQL 표준 에러 형식을 따른다. `extensions.code`로 비즈니스 에
 
 | 그룹 | 문서 | 설명 | 주요 타입 |
 |------|------|------|-----------|
+| Gateway | [GRAPHQL_GATEWAY.md](./GRAPHQL_GATEWAY.md) | GraphQL Gateway 공통 계약, context, 공통 SDL, 보안/성능 제한 | `Query`, `Mutation`, `PageInfo`, directives |
 | 인증 | [AUTH.md](./AUTH.md) | 초대 코드 가입, 소셜 로그인, 관리자 초대 코드 관리 | `AuthPayload`, `User`, `Company`, `InviteCode` |
 | 매칭 | [MATCHING.md](./MATCHING.md) | 같은 회사 사원 간 카풀 등록/검색/요청/수락 | `Ride`, `RideRequest`, `SearchRidesInput` |
 | 채팅 | [CHAT.md](./CHAT.md) | 같은 회사 사원 간 실시간 메시지, Socket.IO | `ChatRoom`, `Message`, WebSocket 이벤트 |

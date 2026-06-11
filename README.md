@@ -19,6 +19,7 @@ docs/
 │   └── implementation/    # 이슈별 구현 계획서
 ├── api/                   # API 설계
 │   ├── API.md             # 전체 API 스펙 개요
+│   ├── GRAPHQL_GATEWAY.md # GraphQL Gateway 공통 계약과 SDL
 │   ├── AUTH.md            # 인증/인가 API (초대 코드 포함)
 │   ├── MATCHING.md        # 매칭 API (같은 회사 사원만)
 │   ├── CHAT.md            # 채팅 API
@@ -29,6 +30,7 @@ docs/
 │   └── SCREENS.md         # 화면 정의서
 ├── architecture/          # 기술 아키텍처
 │   ├── ARCHITECTURE.md    # 전체 시스템 아키텍처
+│   ├── MSA.md             # GraphQL Gateway 중심 MSA 서비스 경계
 │   ├── DATABASE.md        # DB 스키마 & ERD
 │   └── INFRA.md           # 인프라 구성도
 └── assets/                # 로고, 이미지, 파일 에셋
