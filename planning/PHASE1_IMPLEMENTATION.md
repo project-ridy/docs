@@ -106,7 +106,6 @@ model User {
   role           Role     @default(passenger) @map("role")
   rating         Decimal  @default(0.0) @map("rating") @db.Decimal(2, 1)
   rideCount      Int      @default(0) @map("ride_count")
-  phoneVerified  Boolean  @default(false) @map("phone_verified")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
@@ -402,7 +401,6 @@ async function main() {
       role: 'driver',
       rating: 4.8,
       rideCount: 42,
-      phoneVerified: true,
       vehicles: {
         create: { model: '아반떼', color: '흰색', plate: '12가 3456', capacity: 4 },
       },
@@ -421,7 +419,6 @@ async function main() {
       role: 'passenger',
       rating: 4.5,
       rideCount: 28,
-      phoneVerified: true,
     },
   });
 
@@ -492,7 +489,6 @@ type User {
   role: Role!
   rating: Float!
   rideCount: Int!
-  phoneVerified: Boolean!
   createdAt: String!
   updatedAt: String!
 }

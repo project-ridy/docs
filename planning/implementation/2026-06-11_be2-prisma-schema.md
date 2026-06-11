@@ -73,7 +73,6 @@ enum Plan {
 enum Provider {
   KAKAO
   GOOGLE
-  APPLE
 }
 
 enum Role {
@@ -230,7 +229,6 @@ model User {
   role          Role     @default(PASSENGER)
   rating        Decimal  @default(0.0) @db.Decimal(2, 1)
   rideCount     Int      @default(0) @map("ride_count")
-  phoneVerified Boolean  @default(false) @map("phone_verified")
 
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt      @map("updated_at")
