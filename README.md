@@ -1,6 +1,8 @@
 # Ridy Docs 📚
 
-**함께 타는 길, Ridy** — 카풀 매칭 서비스의 설계 문서 저장소
+**함께 타는 출퇴근, Ridy** — 기업 단위 폐쇄형 카풀 매칭 서비스의 설계 문서 저장소
+
+같은 회사 사원끼리만 출퇴근 방향이 맞으면 카풀할 수 있도록 연결합니다. 초대 코드 기반 가입으로 외부인을 차단하고, 사내 검증된 환경에서 안전한 카풀을 제공합니다.
 
 이 레포는 Ridy 프로젝트의 제품 기획, API 스펙, 디자인 시스템, 아키텍처 등 **설계 문서**만 관리합니다. 에이전트 스펙/프로토콜/작업 큐/개발 기획서는 [`project-ridy/agents`](https://github.com/project-ridy/agents) 레포에서 별도로 관리합니다.
 
@@ -15,8 +17,8 @@ docs/
 │   └── ROADMAP.md         # 상세 로드맵 & 마일스톤
 ├── api/                   # API 설계
 │   ├── API.md             # 전체 API 스펙 개요
-│   ├── AUTH.md            # 인증/인가 API
-│   ├── MATCHING.md        # 매칭 API
+│   ├── AUTH.md            # 인증/인가 API (초대 코드 포함)
+│   ├── MATCHING.md        # 매칭 API (같은 회사 사원만)
 │   ├── CHAT.md            # 채팅 API
 │   └── PAYMENT.md         # 정산/결제 API
 ├── design/                # 디자인 시스템 & 가이드

@@ -2,7 +2,7 @@
 
 ## 개요
 
-거리 기반 자동 비용 계산 + 토스페이먼츠 결제 연동. 플랫폼 수수료 차감 후 차주 정산.
+거리 기반 자동 비용 계산 + 토스페이먼츠 결제 연동. 회사 plan에 따라 수수료 부담 주체가 다름.
 
 ---
 
@@ -13,12 +13,15 @@ type Settlement {
   id: ID!
   ride: Ride!
   passenger: User!
-  amount: Int!           # 탑승자 결제 금액
-  driverAmount: Int!     # 차주 수령 금액
-  platformFee: Int!      # 플랫폼 수수료
-  status: SettlementStatus!
+  companyId: String!
+  amount: Int!              # 탑승자 결제 금액
+  driverAmount: Int!        # 차주 수령 금액
+  platformFee: Int!         # 플랫폼 수수료
+  companyFee: Int!          # 회사 부담 수수료
+  passengerFee: Int!        # 사원 부담 수수료
   dueDate: String
   paidAt: String
+  status: SettlementStatus!
   createdAt: String!
 }
 
@@ -32,6 +35,12 @@ enum PaymentType {
   CARD
   KAKAO_PAY
   TOSS_PAY
+}
+
+enum CompanyPlan {
+  FREE        # 사원 전액 부담
+  PRO         # 회사 50% 부담
+  ENTERPRISE  # 회사 100% 부담
 }
 
 type PaymentMethod {
@@ -48,6 +57,8 @@ type FareCalculation {
   totalFare: Int!
   perPassenger: Int!
   platformFee: Int!
+  companyFee: Int!
+  passengerFee: Int!
   driverAmount: Int!
 }
 
@@ -70,6 +81,14 @@ input PaySettlementInput {
   paymentMethodId: ID!
 }
 
+type CompanySettlementSummary {
+  totalSettlements: Int!
+  totalAmount: Int!
+  companyFeeTotal: Int!
+  passengerFeeTotal: Int!
+  co2SavedKg: Float!
+}
+
 type SettlementHistoryResult {
   history: [Settlement!]!
   totalEarned: Int!
@@ -80,6 +99,7 @@ type Query {
   mySettlements(from: String, to: String, role: String): SettlementHistoryResult!
   settlementDetail(id: ID!): Settlement!
   myPaymentMethods: [PaymentMethod!]!
+  companySettlements(from: String, to: String): CompanySettlementSummary!  @adminOnly
 }
 
 type Mutation {
@@ -98,16 +118,22 @@ type Mutation {
 
 ### 설명
 
-출발지/도착지 거리 기반으로 카풀 요금 자동 계산. 기본요금 + 거리요금 + 플랫폼 수수료.
+거리 기반 요금 자동 계산. 회사 plan에 따라 수수료 부담 비율이 다름.
 
 ### 계산 공식
 
 ```
-baseFare = 3,000원 (기본)
+baseFare = 3,000원
 distanceFare = 거리(km) × 420원/km
 totalFare = baseFare + distanceFare
 perPassenger = ceil(totalFare / passengers)
-platformFee = ceil(perPassenger × 0.05)  # 5% 수수료
+platformFee = ceil(perPassenger × 0.05)  # 5%
+
+# 회사 plan별 수수료 분담
+FREE:       companyFee=0,            passengerFee=platformFee
+PRO:        companyFee=platformFee/2, passengerFee=platformFee/2
+ENTERPRISE: companyFee=platformFee,   passengerFee=0
+
 driverAmount = perPassenger - platformFee
 ```
 
@@ -115,26 +141,17 @@ driverAmount = perPassenger - platformFee
 
 | # | 케이스 | 입력 | 기대 결과 |
 |---|--------|------|-----------|
-| A1 | 기본 계산 | 강남→수원 (28.5km), 3명 | totalFare=14,970, perPassenger=4,990, platformFee=250, driverAmount=4,740 |
-| A2 | 1명 탑승 | 같은 거리, 1명 | perPassenger=14,970 |
-| A3 | 근거리 | 2km, 2명 | baseFare=3,000 + 840 = 3,840, perPassenger=1,920 |
+| A1 | FREE 플랜 | 28.5km, 3명 | perPassenger=4,990, companyFee=0, passengerFee=250 |
+| A2 | PRO 플랜 | 같은 거리 | companyFee=125, passengerFee=125 |
+| A3 | ENTERPRISE 플랜 | 같은 거리 | companyFee=250, passengerFee=0 |
 
 ### 예외 케이스
 
 | # | 케이스 | 입력 | 기대 결과 |
 |---|--------|------|-----------|
-| E1 | passengers 0 | passengers=0 | `BAD_REQUEST: 탑승자 수는 1 이상이어야 합니다` |
-| E2 | passengers 과다 | passengers=100 | `BAD_REQUEST: 탑승자 수는 4 이하여야 합니다` |
-| E3 | 출발지=도착지 | 같은 좌표 | `BAD_REQUEST: 출발지와 도착지가 같을 수 없습니다` |
-| E4 | 거리 과대 | 서울→부산 (400km+) | `BAD_REQUEST: 카풀 거리는 200km 이내여야 합니다` |
-
-### 엣지 케이스
-
-| # | 케이스 | 설명 | 기대 결과 |
-|---|--------|------|-----------|
-| X1 | 최소 요금 | 0.5km | baseFare 3,000원 적용 (거리요금 210원, 총 3,210원) |
-| X2 | 반올림 | 나누어 떨어지지 않는 금액 | ceil로 올림 처리 |
-| X3 | 수수료 최소 단위 | platformFee < 10원 | 최소 10원으로 설정 |
+| E1 | passengers 0 | passengers=0 | `BAD_REQUEST` |
+| E2 | 출발지=도착지 | 같은 좌표 | `BAD_REQUEST` |
+| E3 | 거리 과대 | 400km+ | `BAD_REQUEST: 카풀 거리는 200km 이내` |
 
 ---
 
@@ -142,112 +159,71 @@ driverAmount = perPassenger - platformFee
 
 ### 설명
 
-탑승자가 등록된 결제 수단으로 정산 금액 결제. 토스페이먼츠 빌링키 결제.
+탑승자가 결제. ENTERPRISE 플랜은 사원 부담 0원이므로 자동 PAID 처리.
 
 ### 정상 케이스
 
-| # | 케이스 | 입력 | 기대 결과 |
-|---|--------|------|-----------|
-| A1 | 카드 결제 | settlementId + paymentMethodId(CARD) | status → PAID, paidAt 기록 |
-| A2 | 카카오페이 결제 | paymentMethodId(KAKAO_PAY) | 동일하게 PAID 처리 |
+| # | 케이스 | 기대 결과 |
+|---|--------|-----------|
+| A1 | 일반 결제 | status → PAID, paidAt 기록 |
+| A2 | ENTERPRISE 자동 처리 | passengerFee=0 → 즉시 PAID (결제 수단 불필요) |
 
 ### 예외 케이스
 
-| # | 케이스 | 입력 | 기대 결과 |
-|---|--------|------|-----------|
-| E1 | 이미 결제된 정산 | status=PAID인 정산 | `BAD_REQUEST: 이미 결제 완료된 정산입니다` |
-| E2 | 취소된 정산 | status=CANCELLED | `BAD_REQUEST: 취소된 정산입니다` |
-| E3 | 본인 아닌 정산 | 다른 탑승자의 정산 | `FORBIDDEN: 본인의 정산만 결제할 수 있습니다` |
-| E4 | 결제 수단 없음 | 존재하지 않는 paymentMethodId | `NOT_FOUND: 결제 수단을 찾을 수 없습니다` |
-| E5 | 결제 실패 (잔액부족) | 토스페이먼츠에서 거절 | `PAYMENT_FAILED: 결제가 거절되었습니다 (잔액부족)` |
-| E6 | 결제 실패 (한도초과) | 한도 초과 | `PAYMENT_FAILED: 결제가 거절되었습니다 (한도초과)` |
-| E7 | 토스페이먼츠 장애 | API 타임아웃 | `INTERNAL_ERROR: 결제 서비스에 일시적인 문제가 있습니다` |
+| # | 케이스 | 기대 결과 |
+|---|--------|-----------|
+| E1 | 이미 결제됨 | `BAD_REQUEST: 이미 결제 완료` |
+| E2 | 본인 아닌 정산 | `FORBIDDEN` |
+| E3 | 결제 실패 (잔액부족) | `PAYMENT_FAILED` |
+| E4 | 토스페이먼츠 장애 | `INTERNAL_ERROR` |
 
 ### 엣지 케이스
 
 | # | 케이스 | 설명 | 기대 결과 |
 |---|--------|------|-----------|
-| X1 | 기한 초과 | dueDate 경과 후 결제 시도 | `BAD_REQUEST: 정산 기한이 만료되었습니다` |
-| X2 | 동시 결제 | 같은 정산에 동시 요청 | 첫 번째만 성공, 두 번째는 E1 에러 |
+| X1 | 기한 초과 | dueDate 경과 | `BAD_REQUEST: 정산 기한 만료` |
+| X2 | 동시 결제 | 같은 정산에 동시 요청 | 첫 번째만 성공 |
 
 ---
 
 ## 기능: 정산 취소 (`cancelSettlement`)
 
-### 설명
-
-결제 완료된 정산 취소. 전액 환불 처리.
-
 ### 정상 케이스
 
 | # | 케이스 | 기대 결과 |
 |---|--------|-----------|
-| A1 | 결제 후 24시간 내 취소 | status → CANCELLED, 토스페이먼츠 환불 처리 |
+| A1 | 24시간 내 취소 | status → CANCELLED, 환불 |
 
 ### 예외 케이스
 
 | # | 케이스 | 기대 결과 |
 |---|--------|-----------|
-| E1 | PENDING 상태 취소 | `BAD_REQUEST: 결제되지 않은 정산은 취소할 수 없습니다` |
-| E2 | 이미 취소됨 | `BAD_REQUEST: 이미 취소된 정산입니다` |
-| E3 | 취소 기한 만료 | 결제 후 7일 경과 | `BAD_REQUEST: 취소 기한이 만료되었습니다` |
+| E1 | PENDING 상태 | `BAD_REQUEST: 결제되지 않은 정산` |
+| E2 | 7일 경과 | `BAD_REQUEST: 취소 기한 만료` |
 
 ---
 
-## 기능: 결제 수단 관리
-
-### 등록 (`registerPaymentMethod`)
-
-| # | 케이스 | 입력 | 기대 결과 |
-|---|--------|------|-----------|
-| A1 | 카드 등록 | type=CARD, billingKey="..." | PaymentMethod 생성 |
-| A2 | 첫 결제 수단 | 유저의 첫 결제 수단 | isDefault=true 자동 설정 |
-
-| # | 예외 | 기대 결과 |
-|---|------|-----------|
-| E1 | 빌링키 없음 | `BAD_REQUEST: 빌링키가 필요합니다` |
-| E2 | 중복 빌링키 | 이미 등록된 빌링키 | `BAD_REQUEST: 이미 등록된 결제 수단입니다` |
-| E3 | 최대 초과 | 결제 수단 5개 초과 | `BAD_REQUEST: 결제 수단은 5개까지 등록 가능합니다` |
-
-### 삭제 (`deletePaymentMethod`)
-
-| # | 케이스 | 기대 결과 |
-|---|--------|-----------|
-| A1 | 일반 삭제 | 결제 수단 삭제 |
-| A2 | 기본 결제 수단 삭제 | 삭제 후 남은 수단 중 첫 번째를 기본으로 자동 설정 |
-
-| # | 예외 | 기대 결과 |
-|---|------|-----------|
-| E1 | 진행 중인 정산 있음 | PENDING 정산이 있는 결제 수단 | `BAD_REQUEST: 진행 중인 정산이 있어 삭제할 수 없습니다` |
-
-### 기본 설정 (`setDefaultPaymentMethod`)
-
-| # | 케이스 | 기대 결과 |
-|---|--------|-----------|
-| A1 | 기본 변경 | 기존 isDefault=false, 선택한 수단 isDefault=true |
-
-| # | 예외 | 기대 결과 |
-|---|------|-----------|
-| E1 | 본인 아닌 수단 | `FORBIDDEN` |
-
----
-
-## 기능: 정산 이력 (`mySettlements`)
+## 기능: 회사 정산 통계 (`companySettlements`) — 관리자 전용
 
 ### 설명
 
-유저의 정산 이력 조회. 차주는 수입, 탑승자는 지출 기준.
+회사 관리자가 전체 정산 현황 조회. ESG 리포트용 CO₂ 절감량 포함.
 
 ### 정상 케이스
 
 | # | 케이스 | 기대 결과 |
 |---|--------|-----------|
-| A1 | 전체 이력 | 모든 정산 내역 + 총 수입/지출 |
-| A2 | 기간 필터 | from/to 날짜 범위 내 결과 |
-| A3 | 역할 필터 | role=driver → 차주 수입 기준 |
+| A1 | 월간 통계 | 총 정산 건수, 회사 부담액, CO₂ 절감량 |
+| A2 | 기간 필터 | from/to 범위 내 결과 |
+
+### 예외 케이스
+
+| # | 케이스 | 기대 결과 |
+|---|--------|-----------|
+| E1 | 관리자 아님 | `FORBIDDEN` |
 
 ### 엣지 케이스
 
 | # | 케이스 | 설명 | 기대 결과 |
 |---|--------|------|-----------|
-| X1 | 이력 없음 | 첫 유저 | `{ history: [], totalEarned: 0, totalSpent: 0 }` |
+| X1 | 데이터 없음 | 첫 달 | 모든 값 0 |
