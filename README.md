@@ -27,25 +27,38 @@ docs/
 │   ├── ARCHITECTURE.md    # 전체 시스템 아키텍처
 │   ├── DATABASE.md        # DB 스키마 & ERD
 │   └── INFRA.md           # 인프라 구성도
-└── agents/                # 에이전트 작업 지시서
+└── agents/                # 에이전트 관련 문서
+    ├── AGENT_SPEC.md      # 에이전트 스펙 (역할, 능력, 제약)
     ├── AGENT_PROTOCOL.md  # 에이전트 협업 프로토콜
     ├── DEVELOPER_TASKS.md # 개발 에이전트 작업 큐
     └── DESIGNER_TASKS.md  # 디자인 에이전트 작업 큐
 ```
 
-## 🤖 에이전트 작업 흐름
+## 🤖 에이전트
 
-1. **Orchestrator**가 docs의 설계 문서를 기준으로 작업을 판단
-2. `agents/` 폴더의 TASK 파일에 작업을 기록
-3. Developer/Designer 에이전트가 각자 TASK 파일을 읽고 작업 수행
-4. 완료 후 TASK 파일 업데이트
+| 에이전트 | 역할 | 담당 레포 | 상세 |
+|---|---|---|---|
+| **Orchestrator** | 설계, 작업 분배, 품질 관리 | docs | [AGENT_SPEC.md](agents/AGENT_SPEC.md) |
+| **Developer** | 프론트엔드/백엔드 구현 | frontend, backend | [AGENT_SPEC.md](agents/AGENT_SPEC.md) |
+| **Designer** | UI/UX 디자인, 접근성 | frontend | [AGENT_SPEC.md](agents/AGENT_SPEC.md) |
+
+### 작업 흐름
+
+**모든 작업은 GitHub Organization Project에서 관리됩니다.**
+📍 프로젝트 보드: https://github.com/orgs/project-ridy/projects/1
+
+1. **Orchestrator**가 docs에 설계를 완료하고 Project에 이슈를 생성
+2. 서브 에이전트(Developer/Designer)에게 `delegate_task`로 이슈 할당
+3. 서브 에이전트가 이슈 내용 + docs 문서를 읽고 TDD 사이클로 작업
+4. PR 생성 → 머지 → Project 이슈 Done 처리
+5. 기능 작업 후 후속 테스트 이슈 진행
 
 ## 🔗 관련 레포
 
 | 레포 | 용도 |
 |---|---|
-| [project-ridy/frontend](https://github.com/project-ridy/frontend) | 웹/앱 프론트엔드 |
-| [project-ridy/backend](https://github.com/project-ridy/backend) | API 서버 |
+| [project-ridy/frontend](https://github.com/project-ridy/frontend) | 웹/앱 프론트엔드 (Next.js + shadcn/ui) |
+| [project-ridy/backend](https://github.com/project-ridy/backend) | API 서버 (NestJS + Prisma) |
 | [project-ridy/docs](https://github.com/project-ridy/docs) | 이 레포 |
 
 ---
