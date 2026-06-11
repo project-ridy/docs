@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390, initial-scale=1">
+<title>Ridy Wireframes</title>
+<style>
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.css');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Pretendard Variable', sans-serif; background: #1a1a2e; display: flex; gap: 32px; padding: 40px; overflow-x: auto; justify-content: center; flex-wrap: wrap; }
+
+.phone {
+  width: 390px; height: 844px; background: #fff; border-radius: 40px;
+  overflow: hidden; position: relative; box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+  flex-shrink: 0;
+}
+.phone-inner { padding: 60px 24px 24px; height: 100%; display: flex; flex-direction: column; }
+.status-bar { position: absolute; top: 12px; left: 0; right: 0; display: flex; justify-content: space-between; padding: 0 32px; font-size: 14px; font-weight: 600; color: #111827; z-index: 10; }
+.home-indicator { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); width: 134px; height: 5px; background: #111827; border-radius: 3px; }
+
+/* Colors */
+:root {
+  --primary: #2563EB; --primary-light: #3B82F6; --primary-dark: #1D4ED8;
+  --secondary: #10B981; --warning: #F59E0B; --danger: #EF4444;
+  --gray-50: #F9FAFB; --gray-100: #F3F4F6; --gray-300: #D1D5DB;
+  --gray-500: #6B7280; --gray-900: #111827;
+  --kakao: #FEE500;
+}
+
+/* Screen 1: Login */
+.screen-login { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 0; }
+.logo-area { text-align: center; margin-bottom: 48px; }
+.logo-icon { font-size: 64px; margin-bottom: 8px; }
+.logo-text { font-size: 36px; font-weight: 800; color: var(--primary); letter-spacing: -1px; }
+.logo-sub { font-size: 16px; color: var(--gray-500); margin-top: 4px; }
+.social-buttons { width: 100%; display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+.btn-social { height: 52px; border-radius: 12px; border: none; font-size: 16px; font-weight: 600; font-family: inherit; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.btn-kakao { background: var(--kakao); color: #191919; }
+.btn-google { background: #fff; color: var(--gray-900); border: 1.5px solid var(--gray-300); }
+.btn-apple { background: #191919; color: #fff; }
+.login-hint { font-size: 13px; color: var(--gray-500); text-align: center; }
+
+/* Screen 2: Onboarding */
+.screen-onboarding { display: flex; flex-direction: column; }
+.nav-bar { display: flex; align-items: center; padding: 16px 0; margin-bottom: 8px; }
+.nav-back { font-size: 20px; color: var(--gray-900); cursor: pointer; }
+.nav-title { font-size: 18px; font-weight: 700; margin-left: 12px; }
+.profile-photo { width: 88px; height: 88px; border-radius: 50%; background: var(--gray-100); border: 3px dashed var(--gray-300); display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 24px; color: var(--gray-500); }
+.form-group { margin-bottom: 16px; }
+.form-label { font-size: 14px; font-weight: 600; color: var(--gray-900); margin-bottom: 6px; display: block; }
+.form-input { width: 100%; height: 48px; border: 1.5px solid var(--gray-300); border-radius: 10px; padding: 0 14px; font-size: 16px; font-family: inherit; color: var(--gray-900); outline: none; }
+.form-input:focus { border-color: var(--primary); }
+.form-input::placeholder { color: var(--gray-500); }
+.toggle-area { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-top: 1px solid var(--gray-100); margin-top: 8px; }
+.toggle-label { font-size: 16px; font-weight: 600; color: var(--gray-900); }
+.toggle-label span { font-size: 13px; color: var(--gray-500); font-weight: 400; display: block; margin-top: 2px; }
+.toggle { width: 52px; height: 30px; background: var(--gray-300); border-radius: 15px; position: relative; cursor: pointer; transition: 0.2s; }
+.toggle.active { background: var(--primary); }
+.toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; background: #fff; border-radius: 50%; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+.toggle.active::after { left: 25px; }
+.vehicle-section { background: var(--gray-50); border-radius: 12px; padding: 16px; margin-top: 12px; }
+.vehicle-section .form-group { margin-bottom: 12px; }
+.vehicle-section .form-group:last-child { margin-bottom: 0; }
+.btn-primary { width: 100%; height: 52px; background: var(--primary); color: #fff; border: none; border-radius: 12px; font-size: 17px; font-weight: 700; font-family: inherit; cursor: pointer; margin-top: auto; }
+
+/* Screen 3: Home */
+.screen-home { display: flex; flex-direction: column; height: 100%; }
+.home-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 0 16px; }
+.home-logo { font-size: 24px; font-weight: 800; color: var(--primary); }
+.home-icons { display: flex; gap: 16px; }
+.home-icons span { font-size: 22px; cursor: pointer; }
+.route-card { background: var(--primary); border-radius: 16px; padding: 20px; color: #fff; margin-bottom: 20px; }
+.route-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 14px; }
+.route-input-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.route-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.route-dot.depart { background: var(--secondary); }
+.route-dot.arrive { background: var(--danger); }
+.route-input { flex: 1; height: 40px; background: rgba(255,255,255,0.2); border: none; border-radius: 8px; padding: 0 12px; color: #fff; font-size: 14px; font-family: inherit; }
+.route-input::placeholder { color: rgba(255,255,255,0.7); }
+.route-time-row { display: flex; gap: 8px; margin-top: 4px; }
+.route-time-btn { flex: 1; height: 36px; background: rgba(255,255,255,0.15); border: none; border-radius: 8px; color: #fff; font-size: 13px; font-family: inherit; cursor: pointer; }
+.route-search-btn { width: 100%; height: 44px; background: #fff; color: var(--primary); border: none; border-radius: 10px; font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer; margin-top: 12px; }
+.section-title { font-size: 17px; font-weight: 700; color: var(--gray-900); margin-bottom: 12px; }
+.carpool-card { background: #fff; border: 1.5px solid var(--gray-100); border-radius: 14px; padding: 16px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.carpool-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.carpool-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--gray-100); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.carpool-name { font-weight: 600; font-size: 15px; color: var(--gray-900); }
+.carpool-rating { font-size: 13px; color: var(--warning); margin-left: auto; }
+.carpool-route { font-size: 14px; color: var(--gray-500); margin-bottom: 8px; }
+.carpool-meta { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--gray-500); }
+.carpool-meta .fare { color: var(--primary); font-weight: 600; }
+
+/* Bottom Nav */
+.bottom-nav { display: flex; justify-content: space-around; align-items: center; padding: 10px 0 28px; border-top: 1px solid var(--gray-100); margin-top: auto; background: #fff; }
+.nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; color: var(--gray-500); cursor: pointer; }
+.nav-item.active { color: var(--primary); }
+.nav-item .icon { font-size: 22px; }
+
+/* Screen 4: Matching Results */
+.screen-matching { display: flex; flex-direction: column; }
+.result-header { padding: 8px 0 12px; }
+.result-route { font-size: 16px; font-weight: 700; color: var(--gray-900); }
+.result-count { font-size: 13px; color: var(--gray-500); margin-top: 2px; }
+.matching-card { background: #fff; border: 1.5px solid var(--gray-100); border-radius: 14px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.matching-top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.matching-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--gray-100); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+.matching-info { flex: 1; }
+.matching-name { font-weight: 700; font-size: 16px; color: var(--gray-900); }
+.matching-stats { font-size: 13px; color: var(--gray-500); }
+.matching-badge { background: var(--secondary); color: #fff; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px; }
+.matching-detail { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.matching-row { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--gray-900); }
+.matching-row .label { color: var(--gray-500); font-size: 13px; min-width: 40px; }
+.matching-bottom { display: flex; align-items: center; justify-content: space-between; }
+.matching-price { font-size: 18px; font-weight: 700; color: var(--primary); }
+.matching-price span { font-size: 13px; font-weight: 400; color: var(--gray-500); }
+.matching-seats { font-size: 13px; color: var(--gray-500); }
+.btn-request { height: 38px; padding: 0 20px; background: var(--primary); color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
+
+/* Screen 5: Chat */
+.screen-chat { display: flex; flex-direction: column; height: 100%; }
+.chat-header { display: flex; align-items: center; gap: 10px; padding: 8px 0 12px; border-bottom: 1px solid var(--gray-100); }
+.chat-back { font-size: 20px; color: var(--gray-900); cursor: pointer; }
+.chat-room-info { flex: 1; }
+.chat-room-name { font-weight: 700; font-size: 15px; color: var(--gray-900); }
+.chat-room-sub { font-size: 12px; color: var(--gray-500); }
+.chat-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--gray-100); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.chat-messages { flex: 1; padding: 16px 0; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
+.msg { max-width: 75%; padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.5; }
+.msg.other { background: var(--gray-100); color: var(--gray-900); align-self: flex-start; border-bottom-left-radius: 4px; }
+.msg.me { background: var(--primary); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+.msg-time { font-size: 11px; color: var(--gray-500); margin-top: 4px; }
+.msg.me .msg-time { color: rgba(255,255,255,0.7); }
+.chat-input-bar { display: flex; align-items: center; gap: 10px; padding: 12px 0 28px; border-top: 1px solid var(--gray-100); }
+.chat-input { flex: 1; height: 42px; border: 1.5px solid var(--gray-300); border-radius: 21px; padding: 0 16px; font-size: 14px; font-family: inherit; outline: none; }
+.chat-input:focus { border-color: var(--primary); }
+.chat-attach { font-size: 22px; color: var(--gray-500); cursor: pointer; }
+.chat-send { width: 42px; height: 42px; background: var(--primary); border: none; border-radius: 50%; color: #fff; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+/* Screen label */
+.screen-label { position: absolute; bottom: -32px; left: 0; right: 0; text-align: center; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.7); letter-spacing: 0.5px; }
+</style>
+</head>
+<body>
+
+<!-- Screen 1: Login -->
+<div class="phone" style="position: relative;">
+  <div class="status-bar"><span>9:41</span><span>●●● 🔋</span></div>
+  <div class="phone-inner">
+    <div class="screen-login">
+      <div class="logo-area">
+        <div class="logo-icon">🚗</div>
+        <div class="logo-text">Ridy</div>
+        <div class="logo-sub">함께 타는 길</div>
+      </div>
+      <div class="social-buttons">
+        <button class="btn-social btn-kakao">💬 카카오 로그인</button>
+        <button class="btn-social btn-google">🔗 구글 로그인</button>
+        <button class="btn-social btn-apple">🍎 Apple 로그인</button>
+      </div>
+      <div class="login-hint">회원가입 없이 소셜 계정으로 바로 시작</div>
+    </div>
+  </div>
+  <div class="home-indicator"></div>
+  <div class="screen-label">1. 스플래시 / 로그인</div>
+</div>
+
+<!-- Screen 2: Onboarding -->
+<div class="phone" style="position: relative;">
+  <div class="status-bar"><span>9:41</span><span>●●● 🔋</span></div>
+  <div class="phone-inner">
+    <div class="screen-onboarding">
+      <div class="nav-bar">
+        <span class="nav-back">←</span>
+        <span class="nav-title">프로필 설정</span>
+      </div>
+      <div class="profile-photo">📷</div>
+      <div class="form-group">
+        <label class="form-label">이름</label>
+        <input class="form-input" placeholder="이름을 입력하세요" value="김도윤">
+      </div>
+      <div class="form-group">
+        <label class="form-label">연락처</label>
+        <input class="form-input" placeholder="010-0000-0000" value="010-1234-5678">
+      </div>
+      <div class="toggle-area">
+        <div class="toggle-label">🚗 차주로 시작<span>차량 정보를 등록하면 차주가 될 수 있어요</span></div>
+        <div class="toggle active"></div>
+      </div>
+      <div class="vehicle-section">
+        <div class="form-group">
+          <label class="form-label">차량 모델</label>
+          <input class="form-input" placeholder="예: 아반떼" value="아반떼">
+        </div>
+        <div class="form-group">
+          <label class="form-label">차량 색상</label>
+          <input class="form-input" placeholder="예: 흰색" value="흰색">
+        </div>
+        <div class="form-group">
+          <label class="form-label">번호판</label>
+          <input class="form-input" placeholder="예: 12가 3456" value="12가 3456">
+        </div>
+        <div class="form-group">
+          <label class="form-label">좌석 수</label>
+          <input class="form-input" placeholder="예: 4" value="4">
+        </div>
+      </div>
+      <button class="btn-primary" style="margin-top: 20px;">시작하기</button>
+    </div>
+  </div>
+  <div class="home-indicator"></div>
+  <div class="screen-label">2. 프로필 설정 (온보딩)</div>
+</div>
+
+<!-- Screen 3: Home -->
+<div class="phone" style="position: relative;">
+  <div class="status-bar"><span>9:41</span><span>●●● 🔋</span></div>
+  <div class="phone-inner">
+    <div class="screen-home">
+      <div class="home-header">
+        <span class="home-logo">Ridy</span>
+        <div class="home-icons"><span>🔔</span><span>👤</span></div>
+      </div>
+      <div class="route-card">
+        <h3>어디로 가세요?</h3>
+        <div class="route-input-row">
+          <div class="route-dot depart"></div>
+          <input class="route-input" placeholder="출발지 입력" value="강남역">
+        </div>
+        <div class="route-input-row">
+          <div class="route-dot arrive"></div>
+          <input class="route-input" placeholder="도착지 입력" value="수원역">
+        </div>
+        <div class="route-time-row">
+          <button class="route-time-btn">🕐 오늘 08:30</button>
+          <button class="route-time-btn">👥 1명</button>
+        </div>
+        <button class="route-search-btn">매칭 찾기</button>
+      </div>
+      <div class="section-title">내 정기 카풀</div>
+      <div class="carpool-card">
+        <div class="carpool-header">
+          <div class="carpool-avatar">🚗</div>
+          <span class="carpool-name">박준서</span>
+          <span class="carpool-rating">⭐ 4.8</span>
+        </div>
+        <div class="carpool-route">강남역 → 수원역</div>
+        <div class="carpool-meta">
+          <span>월~금 08:30</span>
+          <span class="fare">5,000원</span>
+        </div>
+      </div>
+      <div class="carpool-card">
+        <div class="carpool-header">
+          <div class="carpool-avatar">🚗</div>
+          <span class="carpool-name">이민수</span>
+          <span class="carpool-rating">⭐ 4.5</span>
+        </div>
+        <div class="carpool-route">역삼역 → 판교역</div>
+        <div class="carpool-meta">
+          <span>월수금 09:00</span>
+          <span class="fare">3,500원</span>
+        </div>
+      </div>
+      <div class="bottom-nav">
+        <div class="nav-item active"><span class="icon">🏠</span>홈</div>
+        <div class="nav-item"><span class="icon">🔍</span>검색</div>
+        <div class="nav-item"><span class="icon">💬</span>채팅</div>
+        <div class="nav-item"><span class="icon">👤</span>프로필</div>
+      </div>
+    </div>
+  </div>
+  <div class="home-indicator"></div>
+  <div class="screen-label">3. 홈 (탑승자)</div>
+</div>
+
+<!-- Screen 4: Matching Results -->
+<div class="phone" style="position: relative;">
+  <div class="status-bar"><span>9:41</span><span>●●● 🔋</span></div>
+  <div class="phone-inner">
+    <div class="screen-matching">
+      <div class="nav-bar">
+        <span class="nav-back">←</span>
+        <span class="nav-title">매칭 결과</span>
+      </div>
+      <div class="result-header">
+        <div class="result-route">강남역 → 수원역</div>
+        <div class="result-count">5개 결과</div>
+      </div>
+      <div class="matching-card">
+        <div class="matching-top">
+          <div class="matching-avatar">🚗</div>
+          <div class="matching-info">
+            <div class="matching-name">박준서</div>
+            <div class="matching-stats">⭐ 4.8 · 42회 운행</div>
+          </div>
+          <div class="matching-badge">정기</div>
+        </div>
+        <div class="matching-detail">
+          <div class="matching-row"><span class="label">출발</span> 강남역 08:30</div>
+          <div class="matching-row"><span class="label">도착</span> 수원역 09:20</div>
+          <div class="matching-row"><span class="label">선호</span> 🚭 금연 · 🐾 반려동물 불가</div>
+        </div>
+        <div class="matching-bottom">
+          <div>
+            <div class="matching-price">5,000원 <span>/인</span></div>
+            <div class="matching-seats">🪑 2/3석</div>
+          </div>
+          <button class="btn-request">탑승 요청</button>
+        </div>
+      </div>
+      <div class="matching-card">
+        <div class="matching-top">
+          <div class="matching-avatar">🚗</div>
+          <div class="matching-info">
+            <div class="matching-name">이민수</div>
+            <div class="matching-stats">⭐ 4.5 · 28회 운행</div>
+          </div>
+        </div>
+        <div class="matching-detail">
+          <div class="matching-row"><span class="label">출발</span> 강남역 08:45</div>
+          <div class="matching-row"><span class="label">도착</span> 수원역 09:35</div>
+          <div class="matching-row"><span class="label">선호</span> 🚭 금연 · 💼 대형 수하물 가능</div>
+        </div>
+        <div class="matching-bottom">
+          <div>
+            <div class="matching-price">4,500원 <span>/인</span></div>
+            <div class="matching-seats">🪑 1/4석</div>
+          </div>
+          <button class="btn-request">탑승 요청</button>
+        </div>
+      </div>
+      <div class="matching-card">
+        <div class="matching-top">
+          <div class="matching-avatar">🚗</div>
+          <div class="matching-info">
+            <div class="matching-name">최서연</div>
+            <div class="matching-stats">⭐ 4.9 · 67회 운행</div>
+          </div>
+          <div class="matching-badge" style="background: var(--primary);">인기</div>
+        </div>
+        <div class="matching-detail">
+          <div class="matching-row"><span class="label">출발</span> 역삼역 08:20</div>
+          <div class="matching-row"><span class="label">도착</span> 수원역 09:10</div>
+        </div>
+        <div class="matching-bottom">
+          <div>
+            <div class="matching-price">5,500원 <span>/인</span></div>
+            <div class="matching-seats">🪑 3/3석</div>
+          </div>
+          <button class="btn-request">탑승 요청</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="home-indicator"></div>
+  <div class="screen-label">4. 매칭 결과</div>
+</div>
+
+<!-- Screen 5: Chat -->
+<div class="phone" style="position: relative;">
+  <div class="status-bar"><span>9:41</span><span>●●● 🔋</span></div>
+  <div class="phone-inner">
+    <div class="screen-chat">
+      <div class="chat-header">
+        <span class="chat-back">←</span>
+        <div class="chat-room-info">
+          <div class="chat-room-name">강남→수원 카풀</div>
+          <div class="chat-room-sub">박준서 · ⭐ 4.8</div>
+        </div>
+        <div class="chat-avatar">🚗</div>
+      </div>
+      <div class="chat-messages">
+        <div class="msg other">
+          안녕하세요! 내일 탑승 가능하신가요?
+          <div class="msg-time">오후 7:30</div>
+        </div>
+        <div class="msg me">
+          네 가능합니다! 😊
+          <div class="msg-time">오후 7:32</div>
+        </div>
+        <div class="msg other">
+          8시 30분 강남역 2번 출구에서 만나요
+          <div class="msg-time">오후 7:33</div>
+        </div>
+        <div class="msg me">
+          넵, 2번 출구 앞에서 뵙겠습니다!
+          <div class="msg-time">오후 7:35</div>
+        </div>
+        <div class="msg other">
+          흰색 아반떼 12가 3456이에요 👍
+          <div class="msg-time">오후 7:36</div>
+        </div>
+        <div class="msg me">
+          알겠습니다, 내일 뵐게요!
+          <div class="msg-time">오후 7:38</div>
+        </div>
+      </div>
+      <div class="chat-input-bar">
+        <span class="chat-attach">📎</span>
+        <input class="chat-input" placeholder="메시지를 입력하세요">
+        <button class="chat-send">➤</button>
+      </div>
+    </div>
+  </div>
+  <div class="home-indicator"></div>
+  <div class="screen-label">5. 채팅</div>
+</div>
+
+</body>
+</html>
