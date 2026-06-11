@@ -4,7 +4,7 @@
 
 같은 회사 사원끼리만 출퇴근 방향이 맞으면 카풀할 수 있도록 연결합니다. 초대 코드 기반 가입으로 외부인을 차단하고, 사내 검증된 환경에서 안전한 카풀을 제공합니다.
 
-이 레포는 Ridy 프로젝트의 제품 기획, API 스펙, 디자인 시스템, 아키텍처 등 **설계 문서**만 관리합니다. 에이전트 스펙/프로토콜/작업 큐/개발 기획서는 [`project-ridy/agents`](https://github.com/project-ridy/agents) 레포에서 별도로 관리합니다.
+이 레포는 Ridy 프로젝트의 제품 기획, API 스펙, 디자인 시스템, 아키텍처, 이슈별 구현 계획서를 관리합니다. 에이전트 스펙/프로토콜/작업 큐는 [`project-ridy/agents`](https://github.com/project-ridy/agents) 레포에서 별도로 관리합니다.
 
 ## 📂 문서 구조
 
@@ -14,7 +14,8 @@ docs/
 ├── planning/              # 제품 기획 문서
 │   ├── PLANNING.md        # 프로젝트 기획서 (비전, 타겟, 마일스톤)
 │   ├── PERSONAS.md        # 유저 페르소나
-│   └── ROADMAP.md         # 상세 로드맵 & 마일스톤
+│   ├── ROADMAP.md         # 상세 로드맵 & 마일스톤
+│   └── implementation/    # 이슈별 구현 계획서
 ├── api/                   # API 설계
 │   ├── API.md             # 전체 API 스펙 개요
 │   ├── AUTH.md            # 인증/인가 API (초대 코드 포함)
@@ -40,7 +41,7 @@ docs/
 |---|---|
 | 에이전트 스펙 | [project-ridy/agents/spec/AGENT_SPEC.md](https://github.com/project-ridy/agents/blob/main/spec/AGENT_SPEC.md) |
 | 에이전트 프로토콜 | [project-ridy/agents/protocol/AGENT_PROTOCOL.md](https://github.com/project-ridy/agents/blob/main/protocol/AGENT_PROTOCOL.md) |
-| 개발 기획서 | [project-ridy/agents/plans/](https://github.com/project-ridy/agents/tree/main/plans) |
+| 개발 기획서 | [project-ridy/docs/planning/implementation/](https://github.com/project-ridy/docs/tree/main/planning/implementation) |
 | 작업 큐 | [project-ridy/agents/tasks/](https://github.com/project-ridy/agents/tree/main/tasks) |
 
 ## 작업 흐름
@@ -48,9 +49,9 @@ docs/
 **모든 작업은 GitHub Organization Project에서 관리됩니다.**
 📍 프로젝트 보드: https://github.com/orgs/project-ridy/projects/1
 
-1. 사용자 요청 → `agents` 레포의 Planner가 개발 기획서 작성
+1. 사용자 요청 → Planner가 이슈별 구현 계획서 작성 (`planning/implementation/`에 저장)
 2. Orchestrator가 이 설계 문서(`docs`)를 갱신하거나 확인
-3. 기획서 + 설계 문서를 기준으로 Frontend Developer/Backend Developer/Designer가 구현
+3. 구현 계획서 + 설계 문서를 기준으로 Frontend Developer/Backend Developer/Designer가 구현
 4. PR 생성 → 머지 → Project 이슈 Done 처리
 
 ## 🔗 관련 레포
