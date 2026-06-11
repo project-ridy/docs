@@ -27,6 +27,8 @@ docs/
 │   ├── ARCHITECTURE.md    # 전체 시스템 아키텍처
 │   ├── DATABASE.md        # DB 스키마 & ERD
 │   └── INFRA.md           # 인프라 구성도
+├── plans/                 # 개발 기획서 (Planner 에이전트 산출물)
+│   └── README.md          # 기획서 포맷 & 가이드
 └── agents/                # 에이전트 관련 문서
     ├── AGENT_SPEC.md      # 에이전트 스펙 (역할, 능력, 제약)
     ├── AGENT_PROTOCOL.md  # 에이전트 협업 프로토콜
@@ -38,7 +40,8 @@ docs/
 
 | 에이전트 | 역할 | 담당 레포 | 상세 |
 |---|---|---|---|
-| **Orchestrator** | 설계, 작업 분배, 품질 관리 | docs | [AGENT_SPEC.md](agents/AGENT_SPEC.md) |
+| **Orchestrator** | 전체 관리, 작업 분배, 품질 관리 | docs | [AGENT_SPEC.md](agents/AGENT_SPEC.md) |
+| **Planner** | 사용자 요청 분석, 개발 기획서 작성 | docs (plans/) | [AGENT_SPEC.md](agents/AGENT_SPEC.md) |
 | **Developer** | 프론트엔드/백엔드 구현 | frontend, backend | [AGENT_SPEC.md](agents/AGENT_SPEC.md) |
 | **Designer** | UI/UX 디자인, 접근성 | frontend | [AGENT_SPEC.md](agents/AGENT_SPEC.md) |
 

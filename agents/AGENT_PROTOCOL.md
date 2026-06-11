@@ -2,11 +2,12 @@
 
 ## 개요
 
-Ridy 프로젝트는 3개의 에이전트가 협업합니다:
+Ridy 프로젝트는 4개의 에이전트가 협업합니다:
 
 | 에이전트 | 역할 | 작업 레포 |
 |---|---|---|
-| **Orchestrator** | 설계, 작업 분배, 품질 관리 | docs |
+| **Orchestrator** | 전체 관리, 작업 분배, 품질 관리 | docs |
+| **Planner** | 사용자 요청 분석, 개발 기획서 작성 | docs (plans/) |
 | **Developer** | 프론트엔드/백엔드 구현 | frontend, backend |
 | **Designer** | UI/UX 디자인, 에셋 제작 | frontend (design 파일) |
 
@@ -38,14 +39,17 @@ Ridy 프로젝트는 3개의 에이전트가 협업합니다:
 ## 작업 흐름
 
 ```
-1. Orchestrator가 GitHub Project의 이슈를 기준으로 작업 판단
-2. 이슈에 자신을 어사인 (`gh issue edit <번호> --add-assignee @me`)
-3. 이슈 상태를 "In Progress"로 변경
-4. Developer/Designer 에이전트가 이슈 내용 + docs 문서를 읽고 작업 수행
-5. 브랜치 생성 → TDD 사이클 → PR 생성
-6. PR 머지 후 이슈를 "Done"으로 변경
-7. 기능 작업인 경우 후속 테스트 이슈를 "In Progress"로 변경
-7. Orchestrator가 결과 확인 후 다음 작업 판단
+1. 사용자가 기능 요청 → Orchestrator가 Planner에게 기획 지시
+2. Planner가 요청 분석 & 개발 기획서 작성 (docs/plans/)
+3. Orchestrator가 기획서 리뷰 & 승인
+4. Orchestrator가 기획서 기반으로 GitHub Project에 이슈 생성
+5. 이슈에 자신을 어사인 (`gh issue edit <번호> --add-assignee @me`)
+6. 이슈 상태를 "In Progress"로 변경
+7. Developer/Designer 에이전트가 기획서 + docs 문서를 읽고 작업 수행
+8. 브랜치 생성 → TDD 사이클 → PR 생성
+9. PR 머지 후 이슈를 "Done"으로 변경
+10. 기능 작업인 경우 후속 테스트 이슈를 "In Progress"로 변경
+11. Orchestrator가 결과 확인 후 다음 작업 판단
 ```
 
 ### 작업 우선순위 규칙
@@ -80,6 +84,14 @@ Ridy 프로젝트는 3개의 에이전트가 협업합니다:
 3. 프론트엔드는 `docs/design/DESIGN_SYSTEM.md` 토큰을 사용한다
 4. **TDD 필수** — Red → Green → Refactor 사이클 (CONTRIBUTING.md 참고)
 5. 기능 PR 머지 후 대응되는 테스트 이슈를 진행
+6. **기획서 준수** — `docs/plans/`의 기획서에 정의된 코드 구조, 예외 처리, 테스트 시나리오를 따른다
+
+### Planner
+1. 사용자 요청을 기능 단위로 분해하여 개발 기획서를 작성한다
+2. 기획서에는 코드 구조, 함수 시그니처, 예외 처리, 엣지 케이스, 테스트 시나리오를 포함한다
+3. 기존 docs 스펙(API, DB, 디자인)과의 충돌 여부를 사전에 확인한다
+4. 기획서는 `docs/plans/` 디렉토리에 작성한다
+5. 기획서 머지 전 Orchestrator의 리뷰를 받는다
 
 ### Designer
 1. `docs/design/DESIGN_SYSTEM.md`의 컬러/타포를 준수한다

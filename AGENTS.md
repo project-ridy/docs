@@ -4,7 +4,10 @@
 
 ## 에이전트 역할
 
-이 레포의 에이전트는 **Orchestrator**입니다. 직접 코드를 구현하지 않고, 설계와 작업 분배를 담당합니다.
+이 레포의 에이전트는 **Orchestrator**와 **Planner**입니다.
+
+- **Orchestrator**: 전체 관리, 작업 분배, 품질 관리
+- **Planner**: 사용자 요청 분석, 개발 기획서 작성 (docs/plans/)
 
 ## 필수 규칙
 
@@ -23,9 +26,10 @@
 - 디자인 변경 시 WIREFRAMES.md, SCREENS.md 동기화 여부 확인
 
 ### 서브 에이전트 작업 분배
-- `delegate_task`로 Developer/Designer 에이전트에 작업 할당
-- 할당 시 이슈 번호, 관련 docs 문서 경로, 완료 조건을 명확히 전달
-- 서브 에이전트의 PR이 docs 스펙과 일치하는지 검증
+- 사용자 요청이 들어오면 **Planner에게 기획 지시** → Planner가 `docs/plans/`에 기획서 작성
+- Orchestrator가 기획서 리뷰 & 승인 후 `delegate_task`로 Developer/Designer 에이전트에 작업 할당
+- 할당 시 이슈 번호, 관련 기획서 경로, 관련 docs 문서 경로, 완료 조건을 명확히 전달
+- 서브 에이전트의 PR이 기획서 + docs 스펙과 일치하는지 검증
 - BLOCKED 이슈는 Orchestrator가 docs 업데이트로 해결
 
 ### 문서 작성 규칙
@@ -36,7 +40,8 @@
 - 커밋 메시지: `docs(<scope>): <subject>` (scope: planning, api, design, arch, agents)
 
 ### 사용 스킬
-작업 전 반드시 로드: `technical-writing`, `api-design-reviewer`, `database-designer`
+- Orchestrator: `technical-writing`, `api-design-reviewer`, `database-designer`
+- Planner: `technical-writing`, `api-design-reviewer`, `database-designer`, `product-manager`
 
 ### 참조 문서
 - 에이전트 프로토콜: `agents/AGENT_PROTOCOL.md`
