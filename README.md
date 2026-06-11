@@ -11,6 +11,7 @@
 ```
 docs/
 ├── README.md              # 이 파일 — 문서 인덱스
+├── WORKFLOW.md            # 전체 레포 공통 작업 규칙
 ├── planning/              # 제품 기획 문서
 │   ├── PLANNING.md        # 프로젝트 기획서 (비전, 타겟, 마일스톤)
 │   ├── PERSONAS.md        # 유저 페르소나
@@ -41,6 +42,7 @@ docs/
 |---|---|
 | 에이전트 스펙 | [project-ridy/agents/spec/AGENT_SPEC.md](https://github.com/project-ridy/agents/blob/main/spec/AGENT_SPEC.md) |
 | 에이전트 프로토콜 | [project-ridy/agents/protocol/AGENT_PROTOCOL.md](https://github.com/project-ridy/agents/blob/main/protocol/AGENT_PROTOCOL.md) |
+| 공통 작업 규칙 | [project-ridy/docs/WORKFLOW.md](https://github.com/project-ridy/docs/blob/main/WORKFLOW.md) |
 | 개발 기획서 | [project-ridy/docs/planning/implementation/](https://github.com/project-ridy/docs/tree/main/planning/implementation) |
 | 작업 큐 | [project-ridy/agents/tasks/](https://github.com/project-ridy/agents/tree/main/tasks) |
 
