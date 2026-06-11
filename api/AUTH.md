@@ -89,6 +89,24 @@ input UpdateProfileInput {
   employeeId: String
 }
 
+input SendPhoneVerificationCodeInput {
+  phone: String!
+}
+
+input VerifyPhoneCodeInput {
+  phone: String!
+  code: String!
+}
+
+type PhoneVerificationCodePayload {
+  success: Boolean!
+  expiresInSeconds: Int!
+}
+
+type PhoneVerificationPayload {
+  success: Boolean!
+}
+
 input GenerateInviteCodeInput {
   maxUses: Int
   expiresAt: String
@@ -105,6 +123,8 @@ type Mutation {
   login(input: LoginInput!): AuthPayload!
   refreshToken(token: String!): AuthPayload!
   updateProfile(input: UpdateProfileInput!): User!
+  sendPhoneVerificationCode(input: SendPhoneVerificationCodeInput!): PhoneVerificationCodePayload!
+  verifyPhoneCode(input: VerifyPhoneCodeInput!): PhoneVerificationPayload!
   generateInviteCode(input: GenerateInviteCodeInput!): InviteCode!  @adminOnly
   deactivateInviteCode(id: ID!): InviteCode!  @adminOnly
 }
@@ -205,6 +225,52 @@ type Mutation {
 |---|--------|-----------|
 | E1 | admin 권한 변경 시도 | role=admin 설정 불가 (관리자는 별도 승격) |
 | E2 | 빈 이름 | name="" | `BAD_REQUEST: 이름은 필수입니다` |
+
+---
+
+## 기능: 휴대폰 인증 코드 발송 (`sendPhoneVerificationCode`)
+
+### 설명
+
+현재 로그인 사용자의 휴대폰 번호로 6자리 인증 코드를 발송한다. 인증 코드는 5분 동안 유효하며, 새 코드를 발급하면 기존 미인증 코드는 폐기된다.
+
+### 정상 케이스
+
+| # | 케이스 | 입력 | 기대 결과 |
+|---|--------|------|-----------|
+| A1 | 정상 발송 | `010-1234-5678` | `success=true`, `expiresInSeconds=300` |
+| A2 | 하이픈 없는 번호 | `01012345678` | `+821****5678` 형식으로 정규화 후 저장 |
+| A3 | 재발송 | 기존 미인증 코드 존재 | 기존 코드 폐기 후 새 코드 저장 |
+
+### 예외 케이스
+
+| # | 케이스 | 기대 결과 |
+|---|--------|-----------|
+| E1 | 미로그인 | `UNAUTHORIZED: 로그인이 필요합니다` |
+| E2 | 잘못된 휴대폰 번호 | `BAD_REQUEST: 올바른 휴대폰 번호를 입력해주세요` |
+
+---
+
+## 기능: 휴대폰 인증 코드 검증 (`verifyPhoneCode`)
+
+### 설명
+
+현재 로그인 사용자가 입력한 6자리 코드를 검증하고, 성공 시 `users.phone`, `users.phoneVerified=true`를 업데이트한다.
+
+### 정상 케이스
+
+| # | 케이스 | 기대 결과 |
+|---|--------|-----------|
+| A1 | 유효한 코드 | `success=true`, 휴대폰 인증 완료 |
+
+### 예외 케이스
+
+| # | 케이스 | 기대 결과 |
+|---|--------|-----------|
+| E1 | 미로그인 | `UNAUTHORIZED: 로그인이 필요합니다` |
+| E2 | 코드 불일치 | `BAD_REQUEST: 인증 코드가 올바르지 않습니다` |
+| E3 | 만료된 코드 | `BAD_REQUEST: 인증 코드가 만료되었습니다` |
+| E4 | 6자리 숫자가 아님 | `BAD_REQUEST: 인증 코드는 6자리 숫자여야 합니다` |
 
 ---
 

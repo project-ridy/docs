@@ -160,10 +160,30 @@ model User {
   payments      PaymentMethod[]
   settlements   Settlement[]
   createdInviteCodes InviteCode[] @relation("InviteCodeCreator")
+  phoneVerificationCodes PhoneVerificationCode[]
   adminOf       Company?       @relation("CompanyAdmin", fields: [id], references: [adminId])
 
   @@unique([companyId, employeeId]) // 같은 기업 내 사번 중복 방지
   @@map("users")
+}
+
+// ============================================================
+// 휴대폰 인증 코드 (PhoneVerificationCode)
+// ============================================================
+model PhoneVerificationCode {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  phone      String    @db.VarChar(20)
+  code       String    @db.VarChar(6)
+  expiresAt  DateTime  @map("expires_at")
+  verifiedAt DateTime? @map("verified_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  user       User      @relation(fields: [userId], references: [id])
+
+  @@index([userId, phone, code, verifiedAt])
+  @@index([expiresAt])
+  @@map("phone_verification_codes")
 }
 
 enum Provider {
@@ -439,6 +459,22 @@ enum MessageType {
 | updated_at | TIMESTAMP | | 수정일 |
 
 **제약**: `(company_id, employee_id)` 복합 유니크 — 같은 기업 내 사번 중복 방지
+
+### phone_verification_codes
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| id | UUID | PK | 휴대폰 인증 코드 ID |
+| user_id | UUID | FK → users, NOT NULL | 인증 요청 사용자 |
+| phone | VARCHAR(20) | NOT NULL | E.164 형식 휴대폰 번호 (`+821****5678`) |
+| code | VARCHAR(6) | NOT NULL | 6자리 숫자 인증 코드 |
+| expires_at | TIMESTAMP | NOT NULL | 코드 만료 시각 |
+| verified_at | TIMESTAMP | | 검증 완료 또는 폐기 시각 |
+| created_at | TIMESTAMP | DEFAULT now() | 생성 시각 |
+
+**인덱스**:
+- `(user_id, phone, code, verified_at)` — 미검증 코드 조회
+- `expires_at` — 만료 코드 정리 작업
 
 ### rides
 
