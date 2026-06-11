@@ -48,7 +48,7 @@ docs/
 
 1. 사용자 요청 → `agents` 레포의 Planner가 개발 기획서 작성
 2. Orchestrator가 이 설계 문서(`docs`)를 갱신하거나 확인
-3. 기획서 + 설계 문서를 기준으로 Developer/Designer가 구현
+3. 기획서 + 설계 문서를 기준으로 Frontend Developer/Backend Developer/Designer가 구현
 4. PR 생성 → 머지 → Project 이슈 Done 처리
 
 ## 🔗 관련 레포

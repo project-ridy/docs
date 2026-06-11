@@ -150,7 +150,7 @@
 1. `DATABASE.md`에 테이블/컬럼 정의 추가
 2. `ARCHITECTURE.md`의 ERD 다이어그램 업데이트
 3. 관련 API 스펙에 필드 추가/변경 반영
-4. Developer 에이전트 작업 큐에 마이그레이션 이슈 추가
+4. agents 레포의 Backend Developer 작업 큐에 마이그레이션 이슈 추가
 
 ---
 
