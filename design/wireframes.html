@@ -3,71 +3,65 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=390, initial-scale=1">
-<title>Ridy Wireframes</title>
+<title>Ridy Wireframes — 기업 카풀</title>
 <style>
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.css');
-
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: 'Pretendard Variable', sans-serif; background: #1a1a2e; display: flex; gap: 32px; padding: 40px; overflow-x: auto; justify-content: center; flex-wrap: wrap; }
-
-.phone {
-  width: 390px; height: 844px; background: #fff; border-radius: 40px;
-  overflow: hidden; position: relative; box-shadow: 0 25px 60px rgba(0,0,0,0.4);
-  flex-shrink: 0;
-}
+.phone { width: 390px; height: 844px; background: #fff; border-radius: 40px; overflow: hidden; position: relative; box-shadow: 0 25px 60px rgba(0,0,0,0.4); flex-shrink: 0; }
 .phone-inner { padding: 60px 24px 24px; height: 100%; display: flex; flex-direction: column; }
 .status-bar { position: absolute; top: 12px; left: 0; right: 0; display: flex; justify-content: space-between; padding: 0 32px; font-size: 14px; font-weight: 600; color: #111827; z-index: 10; }
 .home-indicator { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); width: 134px; height: 5px; background: #111827; border-radius: 3px; }
+.screen-label { position: absolute; bottom: -32px; left: 0; right: 0; text-align: center; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.7); letter-spacing: 0.5px; }
+:root { --primary: #2563EB; --primary-light: #3B82F6; --primary-dark: #1D4ED8; --secondary: #10B981; --warning: #F59E0B; --danger: #EF4444; --gray-50: #F9FAFB; --gray-100: #F3F4F6; --gray-300: #D1D5DB; --gray-500: #6B7280; --gray-900: #111827; --kakao: #FEE500; }
 
-/* Colors */
-:root {
-  --primary: #2563EB; --primary-light: #3B82F6; --primary-dark: #1D4ED8;
-  --secondary: #10B981; --warning: #F59E0B; --danger: #EF4444;
-  --gray-50: #F9FAFB; --gray-100: #F3F4F6; --gray-300: #D1D5DB;
-  --gray-500: #6B7280; --gray-900: #111827;
-  --kakao: #FEE500;
-}
-
-/* Screen 1: Login */
-.screen-login { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 0; }
-.logo-area { text-align: center; margin-bottom: 48px; }
+/* Login */
+.screen-login { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
 .logo-icon { font-size: 64px; margin-bottom: 8px; }
 .logo-text { font-size: 36px; font-weight: 800; color: var(--primary); letter-spacing: -1px; }
-.logo-sub { font-size: 16px; color: var(--gray-500); margin-top: 4px; }
-.social-buttons { width: 100%; display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+.logo-sub { font-size: 16px; color: var(--gray-500); margin-top: 4px; margin-bottom: 36px; }
+.invite-code-area { width: 100%; margin-bottom: 24px; }
+.invite-label { font-size: 14px; font-weight: 600; color: var(--gray-900); margin-bottom: 6px; display: block; }
+.invite-input { width: 100%; height: 52px; border: 2px solid var(--gray-300); border-radius: 12px; padding: 0 16px; font-size: 20px; font-family: inherit; text-align: center; letter-spacing: 4px; font-weight: 700; color: var(--primary); outline: none; }
+.invite-input:focus { border-color: var(--primary); }
+.invite-input::placeholder { color: var(--gray-500); font-weight: 400; letter-spacing: 1px; font-size: 15px; }
+.social-buttons { width: 100%; display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
 .btn-social { height: 52px; border-radius: 12px; border: none; font-size: 16px; font-weight: 600; font-family: inherit; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .btn-kakao { background: var(--kakao); color: #191919; }
 .btn-google { background: #fff; color: var(--gray-900); border: 1.5px solid var(--gray-300); }
 .btn-apple { background: #191919; color: #fff; }
 .login-hint { font-size: 13px; color: var(--gray-500); text-align: center; }
 
-/* Screen 2: Onboarding */
+/* Onboarding */
 .screen-onboarding { display: flex; flex-direction: column; }
 .nav-bar { display: flex; align-items: center; padding: 16px 0; margin-bottom: 8px; }
-.nav-back { font-size: 20px; color: var(--gray-900); cursor: pointer; }
+.nav-back { font-size: 20px; color: var(--gray-900); }
 .nav-title { font-size: 18px; font-weight: 700; margin-left: 12px; }
 .profile-photo { width: 88px; height: 88px; border-radius: 50%; background: var(--gray-100); border: 3px dashed var(--gray-300); display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 24px; color: var(--gray-500); }
-.form-group { margin-bottom: 16px; }
+.form-group { margin-bottom: 14px; }
 .form-label { font-size: 14px; font-weight: 600; color: var(--gray-900); margin-bottom: 6px; display: block; }
 .form-input { width: 100%; height: 48px; border: 1.5px solid var(--gray-300); border-radius: 10px; padding: 0 14px; font-size: 16px; font-family: inherit; color: var(--gray-900); outline: none; }
 .form-input:focus { border-color: var(--primary); }
 .form-input::placeholder { color: var(--gray-500); }
+.company-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--gray-50); border: 1.5px solid var(--gray-100); border-radius: 8px; padding: 8px 14px; margin-bottom: 16px; font-size: 14px; color: var(--gray-900); }
+.company-badge .icon { font-size: 18px; }
 .toggle-area { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-top: 1px solid var(--gray-100); margin-top: 8px; }
 .toggle-label { font-size: 16px; font-weight: 600; color: var(--gray-900); }
 .toggle-label span { font-size: 13px; color: var(--gray-500); font-weight: 400; display: block; margin-top: 2px; }
-.toggle { width: 52px; height: 30px; background: var(--gray-300); border-radius: 15px; position: relative; cursor: pointer; transition: 0.2s; }
+.toggle { width: 52px; height: 30px; background: var(--gray-300); border-radius: 15px; position: relative; }
 .toggle.active { background: var(--primary); }
-.toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; background: #fff; border-radius: 50%; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+.toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; background: #fff; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
 .toggle.active::after { left: 25px; }
-.vehicle-section { background: var(--gray-50); border-radius: 12px; padding: 16px; margin-top: 12px; }
-.vehicle-section .form-group { margin-bottom: 12px; }
+.vehicle-section { background: var(--gray-50); border-radius: 12px; padding: 14px; margin-top: 12px; }
+.vehicle-section .form-group { margin-bottom: 10px; }
 .vehicle-section .form-group:last-child { margin-bottom: 0; }
 .btn-primary { width: 100%; height: 52px; background: var(--primary); color: #fff; border: none; border-radius: 12px; font-size: 17px; font-weight: 700; font-family: inherit; cursor: pointer; margin-top: auto; }
 
-/* Screen 3: Home */
+/* Home */
 .screen-home { display: flex; flex-direction: column; height: 100%; }
-.home-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 0 16px; }
+.home-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 0 4px; }
 .home-logo { font-size: 24px; font-weight: 800; color: var(--primary); }
+.home-company { font-size: 12px; color: var(--gray-500); margin-top: -2px; }
 .home-icons { display: flex; gap: 16px; }
 .home-icons span { font-size: 22px; cursor: pointer; }
 .route-card { background: var(--primary); border-radius: 16px; padding: 20px; color: #fff; margin-bottom: 20px; }
@@ -79,27 +73,26 @@ body { font-family: 'Pretendard Variable', sans-serif; background: #1a1a2e; disp
 .route-input { flex: 1; height: 40px; background: rgba(255,255,255,0.2); border: none; border-radius: 8px; padding: 0 12px; color: #fff; font-size: 14px; font-family: inherit; }
 .route-input::placeholder { color: rgba(255,255,255,0.7); }
 .route-time-row { display: flex; gap: 8px; margin-top: 4px; }
-.route-time-btn { flex: 1; height: 36px; background: rgba(255,255,255,0.15); border: none; border-radius: 8px; color: #fff; font-size: 13px; font-family: inherit; cursor: pointer; }
-.route-search-btn { width: 100%; height: 44px; background: #fff; color: var(--primary); border: none; border-radius: 10px; font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer; margin-top: 12px; }
+.route-time-btn { flex: 1; height: 36px; background: rgba(255,255,255,0.15); border: none; border-radius: 8px; color: #fff; font-size: 13px; font-family: inherit; }
+.route-search-btn { width: 100%; height: 44px; background: #fff; color: var(--primary); border: none; border-radius: 10px; font-size: 15px; font-weight: 700; font-family: inherit; margin-top: 12px; }
 .section-title { font-size: 17px; font-weight: 700; color: var(--gray-900); margin-bottom: 12px; }
 .carpool-card { background: #fff; border: 1.5px solid var(--gray-100); border-radius: 14px; padding: 16px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-.carpool-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.carpool-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
 .carpool-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--gray-100); display: flex; align-items: center; justify-content: center; font-size: 18px; }
 .carpool-name { font-weight: 600; font-size: 15px; color: var(--gray-900); }
+.carpool-dept { font-size: 12px; color: var(--gray-500); margin-left: 4px; }
 .carpool-rating { font-size: 13px; color: var(--warning); margin-left: auto; }
-.carpool-route { font-size: 14px; color: var(--gray-500); margin-bottom: 8px; }
+.carpool-route { font-size: 14px; color: var(--gray-500); margin-bottom: 6px; }
 .carpool-meta { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--gray-500); }
 .carpool-meta .fare { color: var(--primary); font-weight: 600; }
-
-/* Bottom Nav */
-.bottom-nav { display: flex; justify-content: space-around; align-items: center; padding: 10px 0 28px; border-top: 1px solid var(--gray-100); margin-top: auto; background: #fff; }
-.nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; color: var(--gray-500); cursor: pointer; }
+.bottom-nav { display: flex; justify-content: space-around; align-items: center; padding: 10px 0 28px; border-top: 1px solid var(--gray-100); margin-top: auto; }
+.nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; color: var(--gray-500); }
 .nav-item.active { color: var(--primary); }
 .nav-item .icon { font-size: 22px; }
 
-/* Screen 4: Matching Results */
+/* Matching */
 .screen-matching { display: flex; flex-direction: column; }
-.result-header { padding: 8px 0 12px; }
+.result-header { padding: 4px 0 12px; }
 .result-route { font-size: 16px; font-weight: 700; color: var(--gray-900); }
 .result-count { font-size: 13px; color: var(--gray-500); margin-top: 2px; }
 .matching-card { background: #fff; border: 1.5px solid var(--gray-100); border-radius: 14px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
@@ -107,6 +100,7 @@ body { font-family: 'Pretendard Variable', sans-serif; background: #1a1a2e; disp
 .matching-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--gray-100); display: flex; align-items: center; justify-content: center; font-size: 20px; }
 .matching-info { flex: 1; }
 .matching-name { font-weight: 700; font-size: 16px; color: var(--gray-900); }
+.matching-dept { font-size: 12px; color: var(--gray-500); }
 .matching-stats { font-size: 13px; color: var(--gray-500); }
 .matching-badge { background: var(--secondary); color: #fff; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px; }
 .matching-detail { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
@@ -116,12 +110,12 @@ body { font-family: 'Pretendard Variable', sans-serif; background: #1a1a2e; disp
 .matching-price { font-size: 18px; font-weight: 700; color: var(--primary); }
 .matching-price span { font-size: 13px; font-weight: 400; color: var(--gray-500); }
 .matching-seats { font-size: 13px; color: var(--gray-500); }
-.btn-request { height: 38px; padding: 0 20px; background: var(--primary); color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
+.btn-request { height: 38px; padding: 0 20px; background: var(--primary); color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; font-family: inherit; }
 
-/* Screen 5: Chat */
+/* Chat */
 .screen-chat { display: flex; flex-direction: column; height: 100%; }
 .chat-header { display: flex; align-items: center; gap: 10px; padding: 8px 0 12px; border-bottom: 1px solid var(--gray-100); }
-.chat-back { font-size: 20px; color: var(--gray-900); cursor: pointer; }
+.chat-back { font-size: 20px; color: var(--gray-900); }
 .chat-room-info { flex: 1; }
 .chat-room-name { font-weight: 700; font-size: 15px; color: var(--gray-900); }
 .chat-room-sub { font-size: 12px; color: var(--gray-500); }
@@ -134,36 +128,60 @@ body { font-family: 'Pretendard Variable', sans-serif; background: #1a1a2e; disp
 .msg.me .msg-time { color: rgba(255,255,255,0.7); }
 .chat-input-bar { display: flex; align-items: center; gap: 10px; padding: 12px 0 28px; border-top: 1px solid var(--gray-100); }
 .chat-input { flex: 1; height: 42px; border: 1.5px solid var(--gray-300); border-radius: 21px; padding: 0 16px; font-size: 14px; font-family: inherit; outline: none; }
-.chat-input:focus { border-color: var(--primary); }
-.chat-attach { font-size: 22px; color: var(--gray-500); cursor: pointer; }
-.chat-send { width: 42px; height: 42px; background: var(--primary); border: none; border-radius: 50%; color: #fff; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.chat-attach { font-size: 22px; color: var(--gray-500); }
+.chat-send { width: 42px; height: 42px; background: var(--primary); border: none; border-radius: 50%; color: #fff; font-size: 18px; display: flex; align-items: center; justify-content: center; }
 
-/* Screen label */
-.screen-label { position: absolute; bottom: -32px; left: 0; right: 0; text-align: center; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.7); letter-spacing: 0.5px; }
+/* Admin Dashboard */
+.screen-admin { display: flex; flex-direction: column; }
+.admin-header { padding: 8px 0 16px; }
+.admin-title { font-size: 22px; font-weight: 800; color: var(--gray-900); }
+.admin-company { font-size: 13px; color: var(--gray-500); }
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+.stat-card { background: var(--gray-50); border-radius: 12px; padding: 14px; text-align: center; }
+.stat-value { font-size: 24px; font-weight: 800; color: var(--primary); }
+.stat-label { font-size: 12px; color: var(--gray-500); margin-top: 2px; }
+.stat-card.green .stat-value { color: var(--secondary); }
+.admin-section { margin-bottom: 16px; }
+.admin-section-title { font-size: 15px; font-weight: 700; color: var(--gray-900); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.code-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--gray-50); border-radius: 10px; margin-bottom: 6px; }
+.code-value { font-size: 16px; font-weight: 700; letter-spacing: 2px; color: var(--primary); }
+.code-usage { font-size: 12px; color: var(--gray-500); }
+.btn-new-code { width: 100%; height: 42px; background: var(--gray-100); color: var(--gray-900); border: 1.5px dashed var(--gray-300); border-radius: 10px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
+.member-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--gray-100); }
+.member-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--gray-100); display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.member-info { flex: 1; }
+.member-name { font-size: 14px; font-weight: 600; color: var(--gray-900); }
+.member-dept { font-size: 12px; color: var(--gray-500); }
+.member-role { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
+.member-role.driver { background: #DBEAFE; color: var(--primary); }
+.member-role.passenger { background: #D1FAE5; color: var(--secondary); }
+.btn-esg { width: 100%; height: 48px; background: var(--secondary); color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
 </style>
 </head>
 <body>
 
-<!-- Screen 1: Login -->
+<!-- Screen 1: Login with Invite Code -->
 <div class="phone" style="position: relative;">
   <div class="status-bar"><span>9:41</span><span>●●● 🔋</span></div>
   <div class="phone-inner">
     <div class="screen-login">
-      <div class="logo-area">
-        <div class="logo-icon">🚗</div>
-        <div class="logo-text">Ridy</div>
-        <div class="logo-sub">함께 타는 길</div>
+      <div class="logo-icon">🚗</div>
+      <div class="logo-text">Ridy</div>
+      <div class="logo-sub">함께 타는 출퇴근</div>
+      <div class="invite-code-area">
+        <label class="invite-label">초대 코드</label>
+        <input class="invite-input" placeholder="6자리 코드 입력" value="ABC123">
       </div>
       <div class="social-buttons">
         <button class="btn-social btn-kakao">💬 카카오 로그인</button>
         <button class="btn-social btn-google">🔗 구글 로그인</button>
         <button class="btn-social btn-apple">🍎 Apple 로그인</button>
       </div>
-      <div class="login-hint">회원가입 없이 소셜 계정으로 바로 시작</div>
+      <div class="login-hint">초대 코드로만 가입 가능합니다</div>
     </div>
   </div>
   <div class="home-indicator"></div>
-  <div class="screen-label">1. 스플래시 / 로그인</div>
+  <div class="screen-label">1. 초대 코드 + 로그인</div>
 </div>
 
 <!-- Screen 2: Onboarding -->
@@ -176,9 +194,14 @@ body { font-family: 'Pretendard Variable', sans-serif; background: #1a1a2e; disp
         <span class="nav-title">프로필 설정</span>
       </div>
       <div class="profile-photo">📷</div>
+      <div class="company-badge"><span class="icon">🏢</span> 테크스타터 소속</div>
       <div class="form-group">
         <label class="form-label">이름</label>
         <input class="form-input" placeholder="이름을 입력하세요" value="김도윤">
+      </div>
+      <div class="form-group">
+        <label class="form-label">사번 (선택)</label>
+        <input class="form-input" placeholder="예: TS-2024-001" value="TS-2024-042">
       </div>
       <div class="form-group">
         <label class="form-label">연락처</label>
@@ -201,12 +224,8 @@ body { font-family: 'Pretendard Variable', sans-serif; background: #1a1a2e; disp
           <label class="form-label">번호판</label>
           <input class="form-input" placeholder="예: 12가 3456" value="12가 3456">
         </div>
-        <div class="form-group">
-          <label class="form-label">좌석 수</label>
-          <input class="form-input" placeholder="예: 4" value="4">
-        </div>
       </div>
-      <button class="btn-primary" style="margin-top: 20px;">시작하기</button>
+      <button class="btn-primary" style="margin-top: 16px;">시작하기</button>
     </div>
   </div>
   <div class="home-indicator"></div>
@@ -219,7 +238,10 @@ body { font-family: 'Pretendard Variable', sans-serif; background: #1a1a2e; disp
   <div class="phone-inner">
     <div class="screen-home">
       <div class="home-header">
-        <span class="home-logo">Ridy</span>
+        <div>
+          <div class="home-logo">Ridy</div>
+          <div class="home-company">테크스타터</div>
+        </div>
         <div class="home-icons"><span>🔔</span><span>👤</span></div>
       </div>
       <div class="route-card">
@@ -236,13 +258,14 @@ body { font-family: 'Pretendard Variable', sans-serif; background: #1a1a2e; disp
           <button class="route-time-btn">🕐 오늘 08:30</button>
           <button class="route-time-btn">👥 1명</button>
         </div>
-        <button class="route-search-btn">매칭 찾기</button>
+        <button class="route-search-btn">동료 카풀 찾기</button>
       </div>
       <div class="section-title">내 정기 카풀</div>
       <div class="carpool-card">
         <div class="carpool-header">
           <div class="carpool-avatar">🚗</div>
           <span class="carpool-name">박준서</span>
+          <span class="carpool-dept">개발팀</span>
           <span class="carpool-rating">⭐ 4.8</span>
         </div>
         <div class="carpool-route">강남역 → 수원역</div>
@@ -255,6 +278,7 @@ body { font-family: 'Pretendard Variable', sans-serif; background: #1a1a2e; disp
         <div class="carpool-header">
           <div class="carpool-avatar">🚗</div>
           <span class="carpool-name">이민수</span>
+          <span class="carpool-dept">디자인팀</span>
           <span class="carpool-rating">⭐ 4.5</span>
         </div>
         <div class="carpool-route">역삼역 → 판교역</div>
@@ -286,13 +310,13 @@ body { font-family: 'Pretendard Variable', sans-serif; background: #1a1a2e; disp
       </div>
       <div class="result-header">
         <div class="result-route">강남역 → 수원역</div>
-        <div class="result-count">5개 결과</div>
+        <div class="result-count">5명의 동료</div>
       </div>
       <div class="matching-card">
         <div class="matching-top">
           <div class="matching-avatar">🚗</div>
           <div class="matching-info">
-            <div class="matching-name">박준서</div>
+            <div class="matching-name">박준서 <span class="matching-dept">개발팀</span></div>
             <div class="matching-stats">⭐ 4.8 · 42회 운행</div>
           </div>
           <div class="matching-badge">정기</div>
@@ -300,7 +324,6 @@ body { font-family: 'Pretendard Variable', sans-serif; background: #1a1a2e; disp
         <div class="matching-detail">
           <div class="matching-row"><span class="label">출발</span> 강남역 08:30</div>
           <div class="matching-row"><span class="label">도착</span> 수원역 09:20</div>
-          <div class="matching-row"><span class="label">선호</span> 🚭 금연 · 🐾 반려동물 불가</div>
         </div>
         <div class="matching-bottom">
           <div>
@@ -314,14 +337,13 @@ body { font-family: 'Pretendard Variable', sans-serif; background: #1a1a2e; disp
         <div class="matching-top">
           <div class="matching-avatar">🚗</div>
           <div class="matching-info">
-            <div class="matching-name">이민수</div>
+            <div class="matching-name">이민수 <span class="matching-dept">디자인팀</span></div>
             <div class="matching-stats">⭐ 4.5 · 28회 운행</div>
           </div>
         </div>
         <div class="matching-detail">
           <div class="matching-row"><span class="label">출발</span> 강남역 08:45</div>
           <div class="matching-row"><span class="label">도착</span> 수원역 09:35</div>
-          <div class="matching-row"><span class="label">선호</span> 🚭 금연 · 💼 대형 수하물 가능</div>
         </div>
         <div class="matching-bottom">
           <div>
@@ -335,7 +357,7 @@ body { font-family: 'Pretendard Variable', sans-serif; background: #1a1a2e; disp
         <div class="matching-top">
           <div class="matching-avatar">🚗</div>
           <div class="matching-info">
-            <div class="matching-name">최서연</div>
+            <div class="matching-name">최서연 <span class="matching-dept">HR팀</span></div>
             <div class="matching-stats">⭐ 4.9 · 67회 운행</div>
           </div>
           <div class="matching-badge" style="background: var(--primary);">인기</div>
@@ -355,7 +377,7 @@ body { font-family: 'Pretendard Variable', sans-serif; background: #1a1a2e; disp
     </div>
   </div>
   <div class="home-indicator"></div>
-  <div class="screen-label">4. 매칭 결과</div>
+  <div class="screen-label">4. 매칭 결과 (같은 회사 동료만)</div>
 </div>
 
 <!-- Screen 5: Chat -->
@@ -367,35 +389,17 @@ body { font-family: 'Pretendard Variable', sans-serif; background: #1a1a2e; disp
         <span class="chat-back">←</span>
         <div class="chat-room-info">
           <div class="chat-room-name">강남→수원 카풀</div>
-          <div class="chat-room-sub">박준서 · ⭐ 4.8</div>
+          <div class="chat-room-sub">박준서 · 개발팀 · ⭐ 4.8</div>
         </div>
         <div class="chat-avatar">🚗</div>
       </div>
       <div class="chat-messages">
-        <div class="msg other">
-          안녕하세요! 내일 탑승 가능하신가요?
-          <div class="msg-time">오후 7:30</div>
-        </div>
-        <div class="msg me">
-          네 가능합니다! 😊
-          <div class="msg-time">오후 7:32</div>
-        </div>
-        <div class="msg other">
-          8시 30분 강남역 2번 출구에서 만나요
-          <div class="msg-time">오후 7:33</div>
-        </div>
-        <div class="msg me">
-          넵, 2번 출구 앞에서 뵙겠습니다!
-          <div class="msg-time">오후 7:35</div>
-        </div>
-        <div class="msg other">
-          흰색 아반떼 12가 3456이에요 👍
-          <div class="msg-time">오후 7:36</div>
-        </div>
-        <div class="msg me">
-          알겠습니다, 내일 뵐게요!
-          <div class="msg-time">오후 7:38</div>
-        </div>
+        <div class="msg other">안녕하세요! 내일 탑승 가능하신가요?<div class="msg-time">오후 7:30</div></div>
+        <div class="msg me">네 가능합니다! 😊<div class="msg-time">오후 7:32</div></div>
+        <div class="msg other">8시 30분 강남역 2번 출구에서 만나요<div class="msg-time">오후 7:33</div></div>
+        <div class="msg me">넵, 2번 출구 앞에서 뵙겠습니다!<div class="msg-time">오후 7:35</div></div>
+        <div class="msg other">흰색 아반떼 12가 3456이에요 👍<div class="msg-time">오후 7:36</div></div>
+        <div class="msg me">알겠습니다, 내일 뵐게요!<div class="msg-time">오후 7:38</div></div>
       </div>
       <div class="chat-input-bar">
         <span class="chat-attach">📎</span>
@@ -406,6 +410,58 @@ body { font-family: 'Pretendard Variable', sans-serif; background: #1a1a2e; disp
   </div>
   <div class="home-indicator"></div>
   <div class="screen-label">5. 채팅</div>
+</div>
+
+<!-- Screen 6: Admin Dashboard -->
+<div class="phone" style="position: relative;">
+  <div class="status-bar"><span>9:41</span><span>●●● 🔋</span></div>
+  <div class="phone-inner">
+    <div class="screen-admin">
+      <div class="admin-header">
+        <div class="admin-title">Ridy 관리자</div>
+        <div class="admin-company">테크스타터 · PRO 플랜</div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-value">142</div><div class="stat-label">이번 달 카풀</div></div>
+        <div class="stat-card green"><div class="stat-value">380kg</div><div class="stat-label">절감 CO₂</div></div>
+        <div class="stat-card"><div class="stat-value">68%</div><div class="stat-label">참여율</div></div>
+        <div class="stat-card green"><div class="stat-value">₩2.4M</div><div class="stat-label">회사 수수료</div></div>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-title">🔗 초대 코드</div>
+        <div class="code-row">
+          <span class="code-value">ABC123</span>
+          <span class="code-usage">8/10명 사용</span>
+        </div>
+        <div class="code-row">
+          <span class="code-value">DEF456</span>
+          <span class="code-usage">3/20명 사용</span>
+        </div>
+        <button class="btn-new-code">+ 새 초대 코드 발급</button>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-title">👥 사원 현황</div>
+        <div class="member-row">
+          <div class="member-avatar">🚗</div>
+          <div class="member-info"><div class="member-name">박준서</div><div class="member-dept">개발팀</div></div>
+          <span class="member-role driver">차주</span>
+        </div>
+        <div class="member-row">
+          <div class="member-avatar">👤</div>
+          <div class="member-info"><div class="member-name">김도윤</div><div class="member-dept">개발팀</div></div>
+          <span class="member-role passenger">탑승자</span>
+        </div>
+        <div class="member-row">
+          <div class="member-avatar">👤</div>
+          <div class="member-info"><div class="member-name">이하늘</div><div class="member-dept">마케팅팀</div></div>
+          <span class="member-role passenger">탑승자</span>
+        </div>
+      </div>
+      <button class="btn-esg">📄 ESG 리포트 다운로드</button>
+    </div>
+  </div>
+  <div class="home-indicator"></div>
+  <div class="screen-label">6. 관리자 대시보드</div>
 </div>
 
 </body>

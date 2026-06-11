@@ -2,12 +2,31 @@
 
 ## 아키텍처
 
-Ridy는 **GraphQL schema-first** 아키텍처를 사용한다.
+Ridy는 **기업 단위 폐쇄형 카풀 서비스**로, **GraphQL schema-first** 아키텍처를 사용한다.
 
 - **GraphQL 엔드포인트**: `POST https://api.ridy.dev/graphql`
 - **WebSocket (채팅)**: `wss://api.ridy.dev/chat?token=<access_token>`
 - **스키마 SSoT**: `backend/src/graphql/schema.graphql`
 - **타입 생성**: 양쪽 모두 `npm run codegen`으로 generated 타입 사용
+
+## 핵심 개념
+
+### 회사 단위 격리
+
+모든 데이터는 회사(Company) 단위로 격리된다.
+
+- **초대 코드 가입**: 기업 관리자가 발급한 초대 코드로만 가입 가능
+- **같은 회사만 매칭**: searchRides 시 자동으로 같은 companyId 필터
+- **같은 회사만 채팅**: 채팅방 접근 시 companyId 검증
+- **회사별 수수료 정책**: CompanyPlan(FREE/PRO/ENTERPRISE)에 따라 수수료 부담 주체 다름
+
+### 회사 플랜
+
+| 플랜 | 수수료 부담 | 기능 |
+|------|------------|------|
+| FREE | 사원 전액 부담 | 기본 매칭/채팅/정산 |
+| PRO | 회사 50% 부담 | + 관리자 대시보드, ESG 리포트 |
+| ENTERPRISE | 회사 100% 부담 | + 맞춤 도메인, 전담 지원 |
 
 ## 인증
 
@@ -19,7 +38,7 @@ Authorization: Bearer <access_token>
 
 - 액세스 토큰: 만료 1시간
 - 리프레시 토큰: 만료 7일
-- 인증 불필요: `login`, `refreshToken`
+- 인증 불필요: `joinWithInviteCode`, `login`, `refreshToken`
 
 ## GraphQL 에러 처리
 
@@ -29,9 +48,9 @@ GraphQL 표준 에러 형식을 따른다. `extensions.code`로 비즈니스 에
 {
   "errors": [
     {
-      "message": "OAuth 토큰이 필요합니다",
+      "message": "유효하지 않은 초대 코드입니다",
       "extensions": {
-        "code": "UNAUTHORIZED"
+        "code": "NOT_FOUND"
       }
     }
   ],
@@ -45,7 +64,7 @@ GraphQL 표준 에러 형식을 따른다. `extensions.code`로 비즈니스 에
 |------|-----------|------|
 | `UNAUTHENTICATED` | 401 | 인증 필요 / 토큰 만료 |
 | `UNAUTHORIZED` | 401 | 권한 없음 (OAuth 토큰 무효 등) |
-| `FORBIDDEN` | 403 | 리소스 접근 권한 없음 |
+| `FORBIDDEN` | 403 | 리소스 접근 권한 없음 (타회사 접근 등) |
 | `NOT_FOUND` | 404 | 리소스 없음 |
 | `BAD_REQUEST` | 400 | 입력값 오류 / 비즈니스 룰 위반 |
 | `CONFLICT` | 409 | 중복 요청 / 상태 충돌 |
@@ -57,10 +76,10 @@ GraphQL 표준 에러 형식을 따른다. `extensions.code`로 비즈니스 에
 
 | 그룹 | 문서 | 설명 | 주요 타입 |
 |------|------|------|-----------|
-| 인증 | [AUTH.md](./AUTH.md) | 소셜 로그인, 토큰 관리, 프로필 | `AuthPayload`, `User`, `LoginInput` |
-| 매칭 | [MATCHING.md](./MATCHING.md) | 카풀 등록/검색/요청/수락 | `Ride`, `RideRequest`, `SearchRidesInput` |
-| 채팅 | [CHAT.md](./CHAT.md) | 실시간 메시지, Socket.IO | `ChatRoom`, `Message`, WebSocket 이벤트 |
-| 정산 | [PAYMENT.md](./PAYMENT.md) | 요금 계산, 정산, 결제 | `Settlement`, `FareCalculation`, `PaymentMethod` |
+| 인증 | [AUTH.md](./AUTH.md) | 초대 코드 가입, 소셜 로그인, 관리자 초대 코드 관리 | `AuthPayload`, `User`, `Company`, `InviteCode` |
+| 매칭 | [MATCHING.md](./MATCHING.md) | 같은 회사 사원 간 카풀 등록/검색/요청/수락 | `Ride`, `RideRequest`, `SearchRidesInput` |
+| 채팅 | [CHAT.md](./CHAT.md) | 같은 회사 사원 간 실시간 메시지, Socket.IO | `ChatRoom`, `Message`, WebSocket 이벤트 |
+| 정산 | [PAYMENT.md](./PAYMENT.md) | 요금 계산, 정산, 결제, 회사별 수수료 정책 | `Settlement`, `FareCalculation`, `CompanyPlan` |
 
 ## 케이스 네이밍 컨벤션
 
