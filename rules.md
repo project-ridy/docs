@@ -214,26 +214,6 @@
 
 ---
 
-## 에이전트 프로토콜 문서
-
-### 작업 큐 형식
-
-```markdown
-### TASK-XXX: 작업 제목
-- **상태**: PENDING | IN_PROGRESS | COMPLETED | BLOCKED
-- **담당**: developer | designer
-- **레포**: frontend | backend | docs
-- **Phase**: Phase N: 이름
-- **우선순위**: P0 | P1 | P2 | P3
-- **의존성**: TASK-YYY (선행 작업)
-- **GitHub 이슈**: project-ridy/<레포>#<번호>
-- **설명**: 구체적인 작업 내용
-- **완료 조건**: 어떤 상태면 완료인지
-- **참고 문서**: docs/의 어떤 파일을 참고할지
-```
-
----
-
 ## 문서 간 동기화
 
 ### 변경 전 체크리스트
@@ -241,7 +221,7 @@ API 스펙을 변경할 때:
 - [ ] `DATABASE.md`에 해당 필드/테이블이 있는지 확인
 - [ ] `ARCHITECTURE.md`에 영향이 없는지 확인
 - [ ] `SCREENS.md`에 해당 화면이 있는지 확인
-- [ ] `DEVELOPER_TASKS.md`에 작업이 추가되었는지 확인
+- [ ] 구현 작업 큐가 필요한 경우 `project-ridy/agents` 레포에 반영했는지 확인
 
 디자인을 변경할 때:
 - [ ] `DESIGN_SYSTEM.md` 토큰이 업데이트되었는지 확인
@@ -265,7 +245,6 @@ DB 스키마를 변경할 때:
 | API 스펙 | UPPER_SNAKE.md | `AUTH.md`, `MATCHING.md` |
 | 디자인 가이드 | UPPER_SNAKE.md | `DESIGN_SYSTEM.md`, `WIREFRAMES.md` |
 | 아키텍처 | UPPER_SNAKE.md | `ARCHITECTURE.md`, `DATABASE.md` |
-| 에이전트 문서 | UPPER_SNAKE.md | `AGENT_SPEC.md`, `AGENT_PROTOCOL.md` |
 | 에셋 | kebab-case.ext | `ridy-logo.png`, `ridy-logo.svg` |
 
 ---
@@ -284,7 +263,6 @@ Closes #<이슈번호>
 | api | API 스펙 |
 | design | 디자인 가이드 |
 | arch | 아키텍처 |
-| agents | 에이전트 프로토콜/작업 큐 |
 | assets | 이미지/파일 에셋 |
 
 **예시:**

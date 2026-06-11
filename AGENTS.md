@@ -1,13 +1,10 @@
 # AGENTS.md — Ridy Docs
 
-이 파일은 이 레포에서 작업하는 에이전트가 반드시 따라야 할 규칙을 정의합니다.
+이 파일은 docs 레포에서 작업하는 에이전트가 반드시 따라야 할 규칙을 정의합니다.
 
 ## 에이전트 역할
 
-이 레포의 에이전트는 **Orchestrator**와 **Planner**입니다.
-
-- **Orchestrator**: 전체 관리, 작업 분배, 품질 관리
-- **Planner**: 사용자 요청 분석, 개발 기획서 작성 (docs/plans/)
+이 레포의 에이전트는 **Orchestrator**입니다. docs 레포는 제품/기술 설계 문서의 단일 진실 공급원(SSoT)이며, 에이전트 관련 문서는 `project-ridy/agents` 레포에서 관리합니다.
 
 ## 필수 규칙
 
@@ -21,30 +18,30 @@
 
 ### 설계 우선 원칙
 - **구현 전에 반드시 docs에 설계를 먼저 완료** — API 스펙, DB 스키마, 화면 정의
-- 서브 에이전트에게 작업을 시키기 전에, 해당 작업에 필요한 docs 문서가 최신인지 확인
-- API 스펙 변경 시 DATABASE.md, ARCHITECTURE.md 동기화 여부 확인
-- 디자인 변경 시 WIREFRAMES.md, SCREENS.md 동기화 여부 확인
+- Developer/Designer에게 작업을 시키기 전에, 해당 작업에 필요한 docs 문서가 최신인지 확인
+- API 스펙 변경 시 `architecture/DATABASE.md`, `architecture/ARCHITECTURE.md` 동기화 여부 확인
+- 디자인 변경 시 `design/WIREFRAMES.md`, `design/SCREENS.md` 동기화 여부 확인
+- 에이전트 스펙/프로토콜/기획서/작업 큐 변경은 `project-ridy/agents` 레포에서 처리
 
-### 서브 에이전트 작업 분배
-- 사용자 요청이 들어오면 **Planner에게 기획 지시** → Planner가 `docs/plans/`에 기획서 작성
-- Orchestrator가 기획서 리뷰 & 승인 후 `delegate_task`로 Developer/Designer 에이전트에 작업 할당
+### 작업 분배 기준
+- 사용자 요청이 들어오면 Planner 기획서는 `project-ridy/agents/plans/`에서 확인
+- Orchestrator가 기획서 리뷰 & 승인 후 Developer/Designer 에이전트에 작업 할당
 - 할당 시 이슈 번호, 관련 기획서 경로, 관련 docs 문서 경로, 완료 조건을 명확히 전달
-- 서브 에이전트의 PR이 기획서 + docs 스펙과 일치하는지 검증
-- BLOCKED 이슈는 Orchestrator가 docs 업데이트로 해결
+- Developer/Designer PR이 기획서 + docs 스펙과 일치하는지 검증
+- BLOCKED 이슈는 Orchestrator가 docs 업데이트 또는 agents 레포 업데이트로 해결
 
 ### 문서 작성 규칙
 - H1(`#`)은 파일당 1개
 - 코드 블록에 언어 명시 (` ```typescript`, ` ```json`)
 - API 문서: HTTP 메서드 + 경로로 시작, 에러 응답 포함
 - 표는 가독성 우선, 열이 많으면 세로 표로 전환
-- 커밋 메시지: `docs(<scope>): <subject>` (scope: planning, api, design, arch, agents)
+- 커밋 메시지: `docs(<scope>): <subject>` (scope: planning, api, design, arch, assets)
 
 ### 사용 스킬
 - Orchestrator: `technical-writing`, `api-design-reviewer`, `database-designer`
-- Planner: `technical-writing`, `api-design-reviewer`, `database-designer`, `product-manager`
 
 ### 참조 문서
-- 에이전트 프로토콜: `agents/AGENT_PROTOCOL.md`
-- 에이전트 스펙: `agents/AGENT_SPEC.md`
-- 개발 작업 큐: `agents/DEVELOPER_TASKS.md`
-- 디자인 작업 큐: `agents/DESIGNER_TASKS.md`
+- 에이전트 프로토콜: https://github.com/project-ridy/agents/blob/main/protocol/AGENT_PROTOCOL.md
+- 에이전트 스펙: https://github.com/project-ridy/agents/blob/main/spec/AGENT_SPEC.md
+- 개발 기획서: https://github.com/project-ridy/agents/tree/main/plans
+- 작업 큐: https://github.com/project-ridy/agents/tree/main/tasks

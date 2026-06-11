@@ -10,13 +10,14 @@
 📍 프로젝트 보드: https://github.com/orgs/project-ridy/projects/1
 
 ```
-1. Project 이슈 할당 → 2. 이슈 자신 어사인 → 3. 이슈 In Progress → 4. 브랜치 생성 → 5. 문서 작성/수정 → 6. PR 생성 → 7. 이슈 Done
+1. Project 이슈 할당 → 2. 이슈 자신 어사인 → 3. 이슈 In Progress → 4. 브랜치 생성 → 5. 설계 문서 작성/수정 → 6. PR 생성 → 7. 이슈 Done
 ```
 
 - **main 브랜치에 직접 커밋 금지** — 모든 변경은 PR로
 - **Project 이슈 없이 작업 금지** — 모든 작업은 Organization Project의 이슈에서 시작
 - **작업 시작 전 이슈에 자신을 어사인** — `gh issue edit <번호> --add-assignee @me`
 - **이슈 상태 관리**: 작업 시작 시 `In Progress`, PR 머지 후 `Done`으로 변경
+- **에이전트 문서 작업 금지** — 에이전트 스펙/프로토콜/기획서/작업 큐는 `project-ridy/agents` 레포에서 관리
 
 ### 에이전트 스킬
 
@@ -52,12 +53,10 @@ docs/
 │   ├── ARCHITECTURE.md    # 시스템 아키텍처
 │   ├── DATABASE.md        # DB 스키마 & ERD
 │   └── INFRA.md           # 인프라 구성도
-├── agents/                # 에이전트 작업 지시서
-│   ├── AGENT_PROTOCOL.md  # 에이전트 협업 프로토콜
-│   ├── DEVELOPER_TASKS.md # 개발 에이전트 작업 큐
-│   └── DESIGNER_TASKS.md  # 디자인 에이전트 작업 큐
 └── assets/                # 이미지, 파일 에셋
 ```
+
+에이전트 관련 문서는 [`project-ridy/agents`](https://github.com/project-ridy/agents) 레포에서 관리합니다.
 
 ---
 
@@ -68,7 +67,7 @@ docs/
 - **제목 계층 준수** — H1(`#`)은 파일당 1개, H2(`##`)부터 섹션 분할
 - **표는 가독성 우선** — 열이 너무 많으면 세로 표로 전환
 - **코드 블록에 언어 명시** — ` ```typescript`, ` ```json`
-- **링크는 상대 경로** — 같은 레포 내 문서는 상대 경로로 연결
+- **링크는 상대 경로** — 같은 레포 내 문서는 상대 경로로 연결, 다른 레포는 GitHub URL 사용
 - **이모지는 제목에만** — 본문에서는 과도한 이모지 자제
 
 ### API 문서 규칙
@@ -82,7 +81,7 @@ docs/
 
 - **API 스펙 변경 시 → DATABASE.md, ARCHITECTURE.md 동기화 확인**
 - **디자인 변경 시 → WIREFRAMES.md, SCREENS.md 동기화 확인**
-- **새 기능 추가 시 → DEVELOPER_TASKS.md / DESIGNER_TASKS.md에 작업 추가**
+- **구현 기획/작업 큐 변경 시 → agents 레포에 반영**
 
 ---
 
@@ -93,7 +92,6 @@ docs/
 | 타입 | 형식 | 예시 |
 |---|---|---|
 | 문서 | `docs/<이슈번호>-<설명>` | `docs/5-api-spec-update` |
-| 에이전트 | `agents/<이슈번호>-<설명>` | `agents/6-add-task-007` |
 
 ### 커밋 메시지
 
@@ -107,7 +105,7 @@ docs(<scope>): <subject>
 | api | API 스펙 |
 | design | 디자인 가이드 |
 | arch | 아키텍처 |
-| agents | 에이전트 프로토콜/작업 큐 |
+| assets | 이미지/파일 에셋 |
 
 **예시:**
 ```
