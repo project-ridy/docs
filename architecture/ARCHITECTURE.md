@@ -7,44 +7,43 @@
 
 ## 전체 구성도
 
+Ridy의 외부 API 진입점은 **GraphQL Gateway**다. GraphQL은 클라이언트용 API 조합 계층으로 사용하고, 내부 서비스 간 통신은 gRPC/internal HTTP와 이벤트 메시지를 사용한다. 세부 MSA 경계는 [MSA.md](./MSA.md)를 기준으로 한다.
+
+```mermaid
+flowchart TB
+  subgraph Client[Client]
+    Employee[사원 앱 / Next.js]
+    Admin[관리자 대시보드 / Next.js]
+  end
+
+  Employee -->|POST /graphql| GQL[GraphQL Gateway]
+  Admin -->|POST /graphql| GQL
+  Employee -->|WSS /realtime| RT[Realtime Gateway]
+
+  GQL --> Auth[Auth Service]
+  GQL --> Company[Company Service]
+  GQL --> Matching[Matching Service]
+  GQL --> Chat[Chat Service]
+  GQL --> Payment[Payment Service]
+
+  Matching --> Bus[(Event Bus)]
+  Payment --> Bus
+  Company --> Bus
+  Bus --> RT
+  Bus --> Analytics[Analytics / ESG Worker]
+  Bus --> Notification[Notification Worker]
+
+  Auth --> AuthDB[(auth_db)]
+  Company --> CompanyDB[(company_db)]
+  Matching --> MatchingDB[(matching_db)]
+  Chat --> ChatDB[(chat_db)]
+  Payment --> PaymentDB[(payment_db)]
+  Analytics --> AnalyticsDB[(analytics_db)]
+
+  RT --> Redis[(Redis Pub/Sub)]
 ```
-                          ┌──────────────────────────────┐
-                          │         Client               │
-                          │  ┌──────────┐ ┌───────────┐ │
-                          │  │ 사원 앱  │ │ 관리자    │ │
-                          │  │(Next.js) │ │ 대시보드  │ │
-                          │  │          │ │(Next.js)  │ │
-                          │  └────┬─────┘ └─────┬─────┘ │
-                          └───────┼─────────────┼───────┘
-                                  │ HTTPS / WSS │
-                          ┌───────▼─────────────▼───────┐
-                          │        API Gateway          │
-                          │          (Nginx)            │
-                          └───────┬─────────────┬───────┘
-                                  │             │
-              ┌───────────────────┼───────────────────────────┐
-              │                   │                           │
-       ┌──────▼──────┐  ┌────────▼────────┐  ┌──────────────▼────────┐
-       │  Auth       │  │  Matching       │  │  Company              │
-       │  Service    │  │  Service        │  │  Service              │
-       │  (NestJS)   │  │  (NestJS)       │  │  (NestJS)             │
-       │             │  │                 │  │  - 초대 코드 발급      │
-       │  - 소셜로그인│  │  - 카풀 등록    │  │  - 사원 관리           │
-       │  - 초대코드  │  │  - 회사 내 매칭 │  │  - 관리자 대시보드     │
-       │    검증 가입 │  │  - 실시간 검색  │  │  - ESG 리포트          │
-       └──────┬──────┘  └───┬─────────────┘  └───────────┬───────────┘
-              │             │                            │
-       ┌──────▼─────────────▼────────────────────────────▼──────┐
-       │                  PostgreSQL                            │
-       │  (companies, users, rides, matchings,                 │
-       │   invite_codes, messages, settlements, esg_reports)   │
-       └──────┬────────────────────────────────────────────────┘
-              │
-       ┌──────▼──────┐    ┌──────────────┐    ┌──────────────┐
-       │   Redis     │    │  S3 (R2)     │    │  Socket.IO   │
-       │ (캐시, 세션)│    │ (이미지, 파일)│    │ (실시간 채팅) │
-       └─────────────┘    └──────────────┘    └──────────────┘
-```
+
+> MVP에서는 단일 NestJS 애플리케이션 안에 위 서비스를 모듈로 구현할 수 있다. 단, 모듈 경계와 GraphQL schema, 이벤트 이름, 데이터 소유권은 MSA 전환을 전제로 설계한다.
 
 ---
 
@@ -125,14 +124,16 @@
 
 | 기술 | 용도 |
 |---|---|
-| NestJS 11 | API 프레임워크 |
-| GraphQL (schema-first) | API 레이어 |
+| NestJS 11 | GraphQL Gateway 및 bounded context 서비스 구현 |
+| GraphQL (schema-first) | 외부 클라이언트 API 계약 / Gateway schema |
+| Apollo Server | GraphQL 실행 계층 |
 | TypeScript | 타입 안전성 |
-| Prisma 7 | ORM |
-| PostgreSQL | 메인 DB |
-| Redis | 캐시, 세션, Pub/Sub |
-| Socket.IO | WebSocket 실시간 채팅 |
-| Bull | 작업 큐 (알림, 정산, ESG 집계) |
+| Prisma 7 | 서비스별 데이터 접근 계층 |
+| PostgreSQL | 서비스별 논리 DB 또는 schema |
+| Redis | 캐시, 세션 보조 저장소, Pub/Sub |
+| Socket.IO | Realtime Gateway / WebSocket 실시간 채팅 |
+| BullMQ | 작업 큐 (알림, 정산, ESG 집계) |
+| Event Bus | 서비스 간 비동기 이벤트 전달 |
 
 ### 인프라
 
@@ -159,15 +160,20 @@
 
 ## 마이크로서비스 경계
 
-| 서비스 | 책임 | 주요 GraphQL 타입 / DB 스키마 |
-|---|---|---|
-| **Auth** | 인증, 인가, 세션, **초대 코드 검증 가입** | `User`, `Session`, `InviteCode` |
-| **Company** | 회사 관리, **초대 코드 발급/재발급**, 사원 목록, **관리자 대시보드**, **ESG 리포트** | `Company`, `InviteCode`, `EsgReport`, `UsageStat` |
-| **Matching** | 카풀 등록, **회사 내 검색**, 매칭, 실시간 라이드 | `Ride`, `Matching`, `Request` |
-| **Chat** | 실시간 메시지 (회사 내 방만) | `Message`, `Room` |
-| **Payment** | 정산, 결제 | `Settlement`, `Payment` |
+상세 기준은 [MSA.md](./MSA.md)를 따른다.
 
-> MVP에서는 모놀리식 NestJS로 시작, 트래픽 증가 시 서비스 분리
+| 서비스 | 책임 | 소유 데이터 | 공개 계약 |
+|---|---|---|---|
+| **GraphQL Gateway** | 외부 GraphQL schema, 인증 컨텍스트, 회사 스코프, 화면 데이터 조합 | 없음 | `POST /graphql` |
+| **Auth Service** | 소셜 로그인, JWT, 세션, 권한 판단 | `users`, `sessions`, `oauth_accounts` | Auth query/command |
+| **Company Service** | 회사, 초대 코드, 사원 목록, 관리자 통계 | `companies`, `invite_codes`, `member_snapshots` | Company query/command, events |
+| **Matching Service** | 카풀 등록, 회사 내 검색, 매칭 요청/수락 | `rides`, `ride_requests`, `vehicles`, `reviews` | Matching query/command, events |
+| **Chat Service** | 채팅방, 메시지 이력, 읽음 상태 | `chat_rooms`, `messages`, `read_receipts` | Chat query, realtime events |
+| **Payment Service** | 요금 계산, 정산, 결제 | `settlements`, `payments`, `payment_methods` | Payment query/command, events |
+| **Analytics Worker** | 이용 통계, ESG 리포트 집계 | `usage_stats`, `esg_reports` | Analytics query, event consumer |
+| **Notification Worker** | 푸시/이메일/SMS 알림 | `notification_logs` | event consumer |
+
+> MVP에서는 모듈형 모놀리스로 시작할 수 있지만, 다른 서비스의 DB를 직접 조회하지 않는다는 소유권 규칙은 처음부터 지킨다.
 
 ---
 
@@ -379,7 +385,7 @@ type Mutation {
 | **매칭** | `searchRides` 결과가 항상 `companyId`로 필터링됨 |
 | **채팅** | 방(Room) 참여 시 `companyId` 일치 확인 |
 | **관리자** | `@adminOnly` 디렉티브로 관리자 권한 검증 |
-| **API Gateway** | Nginx 레벨에서 `/admin/*` 경로에 추가 인증 헤더 검증 옵션 |
+| **GraphQL Gateway** | JWT 검증, query complexity 제한, rate limit, persisted query 적용 |
 | **초대 코드** | 단일 사용(1회용) 또는 다중 사용(기간 만료) 설정 가능 |
 
 ---

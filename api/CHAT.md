@@ -44,7 +44,7 @@ type Query {
 ## WebSocket 이벤트
 
 ```
-연결: wss://api.ridy.dev/chat?token=<access_token>
+연결: wss://api.ridy.dev/realtime?token=<access_token>
 
 # 네임스페이스: /chat
 # Room: company:<companyId> (회사별 격리)
