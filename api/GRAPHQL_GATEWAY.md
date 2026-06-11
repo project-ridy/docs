@@ -140,7 +140,6 @@ type User {
   role: Role!
   rating: Float!
   rideCount: Int!
-  phoneVerified: Boolean!
   company: Company!
   createdAt: DateTime!
   updatedAt: DateTime!
