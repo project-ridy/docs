@@ -10,10 +10,11 @@
 
 ### 작업 흐름
 1. 모든 작업은 **GitHub Organization Project**의 이슈에서 시작 — https://github.com/orgs/project-ridy/projects/1
-2. 이슈를 `In Progress`로 변경 후 작업 시작
-3. 브랜치 생성: `docs/<이슈번호>-<설명>`
-4. PR 생성 후 머지, 이슈를 `Done`으로 변경
-5. main 브랜치에 직접 커밋 금지
+2. 작업 시작 전 **이슈에 자신을 어사인** (`gh issue edit <번호> --add-assignee @me`)
+3. 이슈를 `In Progress`로 변경 후 작업 시작
+4. 브랜치 생성: `docs/<이슈번호>-<설명>`
+5. PR 생성 후 머지, 이슈를 `Done`으로 변경
+6. main 브랜치에 직접 커밋 금지
 
 ### 설계 우선 원칙
 - **구현 전에 반드시 docs에 설계를 먼저 완료** — API 스펙, DB 스키마, 화면 정의

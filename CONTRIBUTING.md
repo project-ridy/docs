@@ -10,11 +10,12 @@
 📍 프로젝트 보드: https://github.com/orgs/project-ridy/projects/1
 
 ```
-1. Project 이슈 할당 → 2. 이슈 In Progress → 3. 브랜치 생성 → 4. 문서 작성/수정 → 5. PR 생성 → 6. 이슈 Done
+1. Project 이슈 할당 → 2. 이슈 자신 어사인 → 3. 이슈 In Progress → 4. 브랜치 생성 → 5. 문서 작성/수정 → 6. PR 생성 → 7. 이슈 Done
 ```
 
 - **main 브랜치에 직접 커밋 금지** — 모든 변경은 PR로
 - **Project 이슈 없이 작업 금지** — 모든 작업은 Organization Project의 이슈에서 시작
+- **작업 시작 전 이슈에 자신을 어사인** — `gh issue edit <번호> --add-assignee @me`
 - **이슈 상태 관리**: 작업 시작 시 `In Progress`, PR 머지 후 `Done`으로 변경
 
 ### 에이전트 스킬

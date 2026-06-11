@@ -39,11 +39,12 @@ Ridy 프로젝트는 3개의 에이전트가 협업합니다:
 
 ```
 1. Orchestrator가 GitHub Project의 이슈를 기준으로 작업 판단
-2. 이슈 상태를 "In Progress"로 변경
-3. Developer/Designer 에이전트가 이슈 내용 + docs 문서를 읽고 작업 수행
-4. 브랜치 생성 → TDD 사이클 → PR 생성
-5. PR 머지 후 이슈를 "Done"으로 변경
-6. 기능 작업인 경우 후속 테스트 이슈를 "In Progress"로 변경
+2. 이슈에 자신을 어사인 (`gh issue edit <번호> --add-assignee @me`)
+3. 이슈 상태를 "In Progress"로 변경
+4. Developer/Designer 에이전트가 이슈 내용 + docs 문서를 읽고 작업 수행
+5. 브랜치 생성 → TDD 사이클 → PR 생성
+6. PR 머지 후 이슈를 "Done"으로 변경
+7. 기능 작업인 경우 후속 테스트 이슈를 "In Progress"로 변경
 7. Orchestrator가 결과 확인 후 다음 작업 판단
 ```
 
@@ -65,12 +66,13 @@ Ridy 프로젝트는 3개의 에이전트가 협업합니다:
 ## 에이전트 규칙
 
 ### 공통
-1. 작업 시작 전 **GitHub Project에서 이슈 상태를 "In Progress"로 변경**
-2. 작업 시작 전 반드시 관련 docs 문서를 읽는다
-3. 브랜치 네이밍: `<type>/<이슈번호>-<설명>` (예: `feat/3-auth-login`)
-4. main 브랜치에 직접 커밋 금지 — PR로 리뷰
-5. 완료 후 **이슈를 "Done"으로 변경**
-6. 기능 작업 후 **후속 테스트 이슈를 생성** (없는 경우)
+1. 작업 시작 전 **이슈에 자신을 어사인** (`gh issue edit <번호> --add-assignee @me`)
+2. 작업 시작 전 **GitHub Project에서 이슈 상태를 "In Progress"로 변경**
+3. 작업 시작 전 반드시 관련 docs 문서를 읽는다
+4. 브랜치 네이밍: `<type>/<이슈번호>-<설명>` (예: `feat/3-auth-login`)
+5. main 브랜치에 직접 커밋 금지 — PR로 리뷰
+6. 완료 후 **이슈를 "Done"으로 변경**
+7. 기능 작업 후 **후속 테스트 이슈를 진행** (없는 경우 생성)
 
 ### Developer
 1. API 작업 시 `docs/api/` 스펙을 정확히 따른다
