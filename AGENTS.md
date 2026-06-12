@@ -30,8 +30,10 @@
 ### 작업 분배 기준
 - 구현 계획서는 `planning/implementation/`에 저장한다.
 - Orchestrator가 구현 계획서 리뷰 & 승인 후 Frontend Developer/Backend Developer/Designer 에이전트에 작업 할당
+- 구현 계획서에는 구현/테스트 케이스 등록표가 반드시 있어야 하며, 모든 기능 코드 항목이 케이스 ID와 대응 테스트 파일/테스트명을 가져야 한다.
 - 할당 시 이슈 번호, 관련 기획서 경로, 관련 docs 문서 경로, 완료 조건을 명확히 전달
 - Frontend Developer/Backend Developer/Designer PR이 기획서 + docs 스펙과 일치하는지 검증
+- PR 검증 시 케이스 ID별 구현 파일, 테스트 파일, 테스트명, 확인 결과가 PR 본문에 있는지 확인한다.
 - BLOCKED 이슈는 Orchestrator가 docs 업데이트 또는 agents 레포 업데이트로 해결
 
 ### 문서 작성 규칙

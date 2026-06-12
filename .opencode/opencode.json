@@ -1,0 +1,5 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "ridy-orchestrator",
+  "instructions": ["WORKFLOW.md", "AGENTS.md", "rules.md"]
+}
