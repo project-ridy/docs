@@ -5,7 +5,7 @@
 - **대상 이슈**: `project-ridy/frontend#5` — `[FEAT] 홈 화면 (탑승자/차주)`
 - **대상 사용자**: 초대 코드 가입과 프로필 설정을 완료한 회사 구성원
 - **목적**: 로그인/온보딩 이후 사용자가 출발지, 도착지, 출발 시간을 입력해 매칭 탐색으로 진입하고, 정기 카풀/내 카풀 상태를 확인할 수 있는 홈 진입점을 제공한다.
-- **현재 판단**: `project-ridy/backend#6` 매칭 API 구현이 아직 완료되지 않았으므로, 이번 1차 구현은 프론트 홈 화면 구조와 라우팅, 테스트를 우선 제공한다. GraphQL `myRides`, `searchRides` 실 연동과 차주 홈 데이터화는 backend#6 이후 진행한다.
+- **현재 판단**: 1차 구현으로 홈 화면 구조와 라우팅이 완료되었고, `project-ridy/backend#6` 매칭 API 및 `backend#7` 테스트가 완료되었다. 이번 2차 구현은 `myRides`, `searchRides` GraphQL operation과 TanStack Query hook을 연결하고 홈의 로딩/빈/데이터 상태를 서버 상태 기반으로 전환한다.
 
 ## 기능 분해
 
@@ -29,7 +29,11 @@
   - `backend/src/graphql/schema.graphql`
     - `searchRides(input: SearchRidesInput!, pagination: PaginationInput): RideConnection`
     - `myRides(status: RideStatus, pagination: PaginationInput): RideConnection`
-- 현재 확인 결과 `backend/src/services/matching/matching-service.module.ts`는 빈 모듈 상태이므로, 프론트 실 API 연동 완료 조건은 backend#6 이후로 둔다.
+- 현재 백엔드 스키마 기준:
+  - `Ride.departure`, `Ride.arrival`은 `LatLng` nested object
+  - `Ride.requests`는 `RideRequest[]`
+  - `SearchRidesInput`은 nested `departure`, `arrival`, `departureTime`, `passengers`, `radiusKm`
+  - `CreateRideInput`에는 정기 카풀 입력 필드가 아직 없음
 
 ### 프론트엔드
 
@@ -43,7 +47,7 @@
   - 홈 화면 렌더링
   - 검색 파라미터 라우팅
   - 하단 내비게이션 이동
-- 후속 GraphQL 연동 시 추가 예정:
+- 2차 GraphQL 연동 추가:
   - `src/graphql/operations/matching.graphql`
   - `lib/api/matching-api.ts`
   - `hooks/useMatchingQueries.ts`
@@ -113,10 +117,34 @@ function useMyRidesQuery(status?: RideStatus) {
 
 ### F-06/F-07: 차주 홈과 GraphQL 연동
 
-#### BLOCKED 사유
+#### 정상 흐름
 
-- `backend#6` 매칭 API 구현이 완료되어야 `myRides`, `searchRides`, 요청 대기 상태를 실제 데이터로 연결할 수 있다.
-- 현재 프론트에서는 임의 API 타입을 만들지 않고 generated GraphQL 타입을 사용해야 하므로, schema/codegen/백엔드 resolver 구현 완료 후 진행한다.
+1. 홈 진입 시 `useMyRidesQuery`가 현재 사용자의 카풀 목록을 조회한다.
+2. query loading 상태에서는 카드 영역에 스켈레톤/로딩 상태를 표시한다.
+3. query data가 있으면 `MatchingCard`에 generated 타입 기반으로 매핑해 표시한다.
+4. data가 비어 있으면 “첫 카풀을 찾아보세요” 빈 상태를 표시한다.
+5. `useSearchRidesQuery`는 검색 화면 후속 연동을 위해 API/hook 레이어에 먼저 제공한다.
+
+#### 함수 시그니처
+
+```typescript
+function useMyRidesQuery(status?: RideStatus) {
+  return useQuery({ queryKey: ['matching', 'myRides', status], queryFn: ... });
+}
+
+function useSearchRidesQuery(input: SearchRidesInput | null) {
+  return useQuery({ queryKey: ['matching', 'searchRides', input], enabled: input !== null, queryFn: ... });
+}
+```
+
+#### 예외 처리
+
+| 케이스 | 조건 | 처리 |
+|---|---|---|
+| E-01 | GraphQL 요청 실패 | 홈 카드 영역에 에러 상태와 재시도 버튼 표시 |
+| E-02 | `myRides` 빈 배열 | 빈 상태 표시 |
+| E-03 | 토큰 없음 | 기존 `AuthGuard`가 `/login` 이동 |
+| E-04 | 백엔드 스키마 변경 | `npm run codegen` 실패로 감지 후 구현 중단 |
 
 ## 테스트 시나리오
 
@@ -141,13 +169,15 @@ function useMyRidesQuery(status?: RideStatus) {
 | 테스트 | 선행 조건 | 설명 |
 |---|---|---|
 | FE-IT-03 | backend#6 완료 | `myRides` MSW 모킹으로 정기 카풀 로딩/빈/데이터 상태 검증 |
-| FE-IT-04 | backend#6 완료 | 차주 role일 때 등록 카풀과 탑승 요청 배지 표시 |
+| FE-IT-04 | backend#6 완료 | `myRides` 에러 시 상태 UI와 재시도 버튼 표시 |
+| FE-IT-05 | backend#6 완료 | `searchRides` API 함수가 generated input/output 타입으로 GraphQL 요청을 수행 |
 
 ## 의존성
 
 - 선행 완료: `project-ridy/frontend#4` 로그인/온보딩 화면
 - 선행 필요: `project-ridy/frontend#2` 디자인 시스템 컴포넌트
-- 후속/차단: `project-ridy/backend#6` 매칭 알고리즘 & API
+- 선행 완료: `project-ridy/backend#6` 매칭 알고리즘 & API
+- 선행 완료: `project-ridy/backend#7` 매칭 API 테스트
 - 관련 문서:
   - `docs/design/SCREENS.md`
   - `docs/design/WIREFRAMES.md`
@@ -165,9 +195,10 @@ function useMyRidesQuery(status?: RideStatus) {
 - 하단 내비게이션 4개 탭 표시 및 검색 탭 이동
 - `npm run test`, `npm run lint`, `npm run build` 통과
 
-### 후속 완료 조건
+### 2차 완료 조건
 
 - `myRides` GraphQL query 연동
-- 역할 기반 탑승자/차주 홈 분기
-- 차주 홈 등록 카풀/탑승 요청 배지
+- `searchRides` GraphQL API/hook 레이어 제공
+- 홈의 내 카풀 카드가 정적 mock이 아니라 GraphQL query data 기반으로 표시
 - 로딩/빈/에러 상태 스켈레톤 또는 상태 UI
+- `npm run codegen`, `npm run test`, `npm run lint`, `npm run build` 통과
