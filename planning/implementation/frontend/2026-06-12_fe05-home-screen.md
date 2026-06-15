@@ -1,5 +1,7 @@
 # 홈 화면 개발 기획서
 
+> **docs#44 이후 상태:** 이 계획서는 기존 “초대 코드 가입 완료 사용자” 표현을 포함한 과거 계획서입니다. 구현 전 최신 SSoT인 `docs/design/SCREENS.md`, `docs/api/AUTH.md` 기준으로 가입 코드 + 회사 이메일 검증 + OAuth 온보딩 완료 사용자를 전제로 새 Case ID 레지스트리를 확인해야 합니다. 구식 계획 그대로 구현하면 `BLOCKED`입니다.
+
 ## 개요
 
 - **대상 이슈**: `project-ridy/frontend#5` — `[FEAT] 홈 화면 (탑승자/차주)`
