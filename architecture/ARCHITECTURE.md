@@ -287,6 +287,42 @@ CO₂ 절감량 = 매칭 건수 × 평균 출퇴근 거리(km) × 차량 평균 
 - Bull 크론잡이 매일 새벽 전일 데이터를 집계하여 `EsgReport`에 upsert.
 - 관리자는 대시보드에서 월/분기 단위로 리포트를 조회 및 PDF 다운로드.
 
+### 개인 친환경 임팩트 조회
+
+사원 앱의 친환경 임팩트 대시보드는 관리자용 `companyEsgReport`와 분리된 사용자 범위 GraphQL API를 사용한다.
+
+| Query | 대상 | 범위 | 설명 |
+|---|---|---|---|
+| `myCarbonImpact(period: String)` | 사원 | `viewer.id` + `viewer.companyId` | 기간 내 개인 누적 CO₂ 절감량, 트리 환산, 레벨, 뱃지 |
+| `carbonHistory(period: String!, pagination: PaginationInput)` | 사원 | `viewer.id` + `viewer.companyId` | 월별 절감 추이와 운행별 절감 내역 |
+| `companyEsgReport(period: String!)` | 관리자 | `viewer.companyId` | 회사 단위 ESG 리포트 |
+
+개인 임팩트 산출 기준:
+
+1. `COMPLETED` 상태의 카풀 중 현재 사용자가 운전자이거나 승인된 탑승자인 운행만 포함한다.
+2. 운행은 반드시 `viewer.companyId`로 필터링한다. 클라이언트에서 `companyId`를 전달하지 않는다.
+3. 기본 CO₂ 절감량은 `운행 거리(km) × 차량 평균 배출계수(0.21 kg CO₂/km)`로 계산한다.
+4. `treeEquivalent`는 `co2SavedKg / 22`로 계산한다. 22kg은 나무 1그루의 연간 CO₂ 흡수량 추정치이다.
+5. 레벨과 뱃지는 서버가 동일 기준으로 계산해 반환한다. 프론트엔드는 표시만 담당한다.
+6. MVP에서는 개인 임팩트 데이터를 `Ride`, `RideRequest`, `User`에서 읽어 계산한다. `EsgReport`는 회사/관리자 집계용으로 유지하며, 개인 임팩트를 위해 신규 테이블을 추가하지 않는다.
+
+레벨 기준:
+
+| 레벨 | 조건 |
+|---|---|
+| `SEED` | 0kg 이상 |
+| `SPROUT` | 10kg 이상 |
+| `TREE` | 50kg 이상 |
+| `FOREST` | 100kg 이상 |
+
+기본 뱃지 기준:
+
+| 뱃지 ID | 조건 |
+|---|---|
+| `FIRST_SHARE` | 완료된 카풀 1회 이상 |
+| `TEN_KG_SAVER` | CO₂ 10kg 이상 절감 |
+| `MONTHLY_STREAK` | 같은 달 완료 카풀 4회 이상 |
+
 ---
 
 ## API 설계 (GraphQL 핵심 스키마)
@@ -325,6 +361,45 @@ type EsgReport {
   participantCount: Int!
 }
 
+type CarbonImpact {
+  period: String!
+  totalRides: Int!
+  totalDistanceKm: Float!
+  co2SavedKg: Float!
+  treeEquivalent: Float!
+  level: String!
+  badges: [CarbonBadge!]!
+}
+
+type CarbonBadge {
+  id: ID!
+  label: String!
+  description: String!
+  achievedAt: DateTime
+}
+
+type CarbonHistoryPoint {
+  period: String!
+  totalRides: Int!
+  totalDistanceKm: Float!
+  co2SavedKg: Float!
+}
+
+type CarbonRideSaving {
+  rideId: ID!
+  completedAt: DateTime!
+  departureAddr: String
+  arrivalAddr: String
+  distanceKm: Float!
+  co2SavedKg: Float!
+}
+
+type CarbonHistory {
+  monthly: [CarbonHistoryPoint!]!
+  rides: [CarbonRideSaving!]!
+  pageInfo: PageInfo!
+}
+
 # ── Queries ──────────────────────────────────────
 type Query {
   # 사원
@@ -337,6 +412,8 @@ type Query {
   companyMembers(offset: Int!, limit: Int!): MemberList!  @auth @adminOnly
   companyStats(period: StatPeriod!): UsageStat!  @auth @adminOnly
   companyEsgReport(period: String!): EsgReport!  @auth @adminOnly
+  myCarbonImpact(period: String): CarbonImpact!  @auth @companyScope
+  carbonHistory(period: String!, pagination: PaginationInput): CarbonHistory!  @auth @companyScope
 }
 
 # ── Mutations ────────────────────────────────────
