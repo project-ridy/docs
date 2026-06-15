@@ -1,5 +1,7 @@
 # BE #45: 가입 코드 회사 이메일 도메인 검증 구현 계획서
 
+> **2026-06-15 기획 변경 이후 상태:** 이 계획서는 OAuth 간편로그인 기반으로 완료된 과거 계획서입니다. 최신 인증 SSoT는 OAuth를 제거하고 회사 이메일 인증코드 + 비밀번호 가입/로그인을 사용합니다. 이후 구현은 `2026-06-15_be50-email-password-auth.md`를 기준으로 해야 하며, 이 파일을 그대로 재사용하면 `BLOCKED`입니다.
+
 ## 목표
 
 `project-ridy/backend#45`에서 docs#44 이후 최신 인증 SSoT를 backend에 반영한다. 가입 코드 기반 가입(`joinWithInviteCode`)은 가입 코드로 회사를 식별한 뒤 사용자가 입력한 `companyEmail`의 도메인이 `Company.domain`과 일치해야 하며, OAuth 프로필 이메일도 같은 회사 도메인과 일치해야 한다.
