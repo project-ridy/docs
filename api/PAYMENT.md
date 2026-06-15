@@ -2,7 +2,7 @@
 
 ## 개요
 
-거리 기반 자동 비용 계산 + 토스페이먼츠 결제 연동. 회사 plan에 따라 수수료 부담 주체가 다름.
+거리 기반 자동 비용 계산 + 토스페이먼츠 결제 연동. MVP에서는 탑승자가 플랫폼 수수료를 부담한다. 회사 플랜에 따른 회사 부담 정산은 후속 B2B 확장 전까지 `BLOCKED`다.
 
 ---
 
@@ -38,9 +38,9 @@ enum PaymentType {
 }
 
 enum CompanyPlan {
-  FREE        # 사원 전액 부담
-  PRO         # 회사 50% 부담
-  ENTERPRISE  # 회사 100% 부담
+  FREE        # 후속 확장 예약
+  PRO         # 후속 확장 예약
+  ENTERPRISE  # 후속 확장 예약
 }
 
 type PaymentMethod {
@@ -118,7 +118,7 @@ type Mutation {
 
 ### 설명
 
-거리 기반 요금 자동 계산. 회사 plan에 따라 수수료 부담 비율이 다름.
+거리 기반 요금 자동 계산. MVP에서는 회사 부담액 없이 탑승자가 플랫폼 수수료를 부담한다.
 
 ### 계산 공식
 
@@ -129,10 +129,12 @@ totalFare = baseFare + distanceFare
 perPassenger = ceil(totalFare / passengers)
 platformFee = ceil(perPassenger × 0.05)  # 5%
 
-# 회사 plan별 수수료 분담
-FREE:       companyFee=0,            passengerFee=platformFee
-PRO:        companyFee=platformFee/2, passengerFee=platformFee/2
-ENTERPRISE: companyFee=platformFee,   passengerFee=0
+# MVP 수수료 분담
+companyFee = 0
+passengerFee = platformFee
+
+# 후속 B2B 확장
+# FREE/PRO/ENTERPRISE 기반 회사 부담 정산은 API/DB/계약 정책 확정 전까지 BLOCKED
 
 driverAmount = perPassenger - platformFee
 ```
@@ -141,9 +143,9 @@ driverAmount = perPassenger - platformFee
 
 | # | 케이스 | 입력 | 기대 결과 |
 |---|--------|------|-----------|
-| A1 | FREE 플랜 | 28.5km, 3명 | perPassenger=4,990, companyFee=0, passengerFee=250 |
-| A2 | PRO 플랜 | 같은 거리 | companyFee=125, passengerFee=125 |
-| A3 | ENTERPRISE 플랜 | 같은 거리 | companyFee=250, passengerFee=0 |
+| A1 | MVP 기본 수수료 | 28.5km, 3명 | perPassenger=4,990, companyFee=0, passengerFee=250 |
+| A2 | 소수 인원 | 10km, 1명 | platformFee 전액이 passengerFee |
+| A3 | 다인 탑승 | 10km, 3명 | 인원수로 나눈 perPassenger 기준 수수료 계산 |
 
 ### 예외 케이스
 
@@ -159,14 +161,14 @@ driverAmount = perPassenger - platformFee
 
 ### 설명
 
-탑승자가 결제. ENTERPRISE 플랜은 사원 부담 0원이므로 자동 PAID 처리.
+탑승자가 결제한다. 회사 부담 정산이 없으므로 `passengerFee`를 포함한 탑승자 결제 금액이 결제 대상이다.
 
 ### 정상 케이스
 
 | # | 케이스 | 기대 결과 |
 |---|--------|-----------|
 | A1 | 일반 결제 | status → PAID, paidAt 기록 |
-| A2 | ENTERPRISE 자동 처리 | passengerFee=0 → 즉시 PAID (결제 수단 불필요) |
+| A2 | 결제 금액 0원 | 프로모션 등 별도 문서화된 경우가 아니면 `BAD_REQUEST` |
 
 ### 예외 케이스
 
@@ -203,24 +205,24 @@ driverAmount = perPassenger - platformFee
 
 ---
 
-## 기능: 회사 정산 통계 (`companySettlements`) — 관리자 전용
+## 기능: 회사 정산 통계 (`companySettlements`) — 후속 운영자/관리자 전용
 
 ### 설명
 
-회사 관리자가 전체 정산 현황 조회. ESG 리포트용 CO₂ 절감량 포함.
+도메인 운영자 또는 후속 기업 관리자가 같은 회사 이메일 도메인 범위의 정산 현황을 조회한다. ESG 리포트용 CO₂ 절감량은 후속 운영/관리자 화면에서 사용한다.
 
 ### 정상 케이스
 
 | # | 케이스 | 기대 결과 |
 |---|--------|-----------|
-| A1 | 월간 통계 | 총 정산 건수, 회사 부담액, CO₂ 절감량 |
+| A1 | 월간 통계 | 총 정산 건수, 사원 부담액, CO₂ 절감량 |
 | A2 | 기간 필터 | from/to 범위 내 결과 |
 
 ### 예외 케이스
 
 | # | 케이스 | 기대 결과 |
 |---|--------|-----------|
-| E1 | 관리자 아님 | `FORBIDDEN` |
+| E1 | 운영자/관리자 아님 | `FORBIDDEN` |
 
 ### 엣지 케이스
 

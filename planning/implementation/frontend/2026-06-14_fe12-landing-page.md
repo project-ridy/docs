@@ -1,5 +1,7 @@
 # FE12 랜딩 페이지 구현 계획
 
+> **docs#44 이후 상태:** 이 계획서는 기존 “초대 코드 가입” 표현을 포함한 과거 계획서입니다. 구현 전 최신 SSoT인 `docs/design/SCREENS.md`, `docs/design/WIREFRAMES.md`, `docs/planning/PLANNING.md` 기준으로 가입 코드 + 회사 이메일 도메인 검증 메시지를 반영해야 합니다. 구식 계획 그대로 구현하면 `BLOCKED`입니다.
+
 ## 목표
 
 - `frontend#12` 공식 마케팅 랜딩 페이지를 구현한다.

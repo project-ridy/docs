@@ -44,7 +44,7 @@ type GraphQLContext = {
 
 1. `viewer.companyId`는 클라이언트 입력으로 받지 않는다.
 2. 회사 범위 데이터는 Gateway 또는 내부 서비스에서 반드시 `viewer.companyId`로 필터링한다.
-3. 관리자 기능은 `viewer.role === 'ADMIN'`이어야 한다.
+3. 운영자/후속 관리자 기능은 `viewer.role === 'ADMIN'`이어야 한다.
 4. 내부 서비스 호출에는 `x-request-id`, `x-company-id`, `x-actor-id`를 전파한다.
 
 ---
@@ -65,6 +65,7 @@ directive @adminOnly on FIELD_DEFINITION
 directive @companyScope on FIELD_DEFINITION
 
 enum CompanyPlan {
+  # 후속 B2B 확장 예약. MVP 수수료/기능 분기는 plan을 사용하지 않는다.
   FREE
   PRO
   ENTERPRISE
@@ -121,7 +122,7 @@ type AuthPayload {
 type Company {
   id: ID!
   name: String!
-  domain: String
+  domain: String!
   plan: CompanyPlan!
   maxMembers: Int!
   memberCount: Int!

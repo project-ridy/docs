@@ -1,5 +1,7 @@
 # BE #13: 초대 코드 시스템 구현 계획서
 
+> **docs#44 이후 상태:** 이 계획서는 기존 “초대 코드/회사 관리자” 표현을 포함한 과거 계획서입니다. 구현 전 반드시 최신 SSoT인 `docs/api/AUTH.md`, `docs/architecture/DATABASE.md`, `docs/planning/B2B_PLAN.md`의 **가입 코드 + 회사 이메일 도메인 검증 + OAuth 가입** 정책에 맞춰 새 계획서와 Case ID 레지스트리를 작성해야 합니다. 구식 계획 그대로 구현하면 `BLOCKED`입니다.
+
 > **For Hermes:** Use subagent-driven-development skill to implement this plan task-by-task.
 
 **Goal:** 회사 관리자가 초대 코드를 발급/조회/비활성화하고, 가입 플로우에서 초대 코드를 검증할 수 있는 기반 API와 서비스를 구현한다.
