@@ -7,84 +7,180 @@
 
 ## ERD
 
+```mermaid
+erDiagram
+  COMPANIES ||--o{ USERS : has_members
+  COMPANIES ||--o{ INVITE_CODES : issues
+  COMPANIES ||--o{ EMAIL_VERIFICATION_CHALLENGES : validates_email
+  COMPANIES ||--o{ RIDES : scopes
+  COMPANIES ||--o{ SETTLEMENTS : scopes
+
+  USERS ||--o{ VEHICLES : owns
+  USERS ||--o{ RIDES : drives
+  USERS ||--o{ RIDE_REQUESTS : requests
+  USERS ||--o{ REVIEWS : writes
+  USERS ||--o{ PAYMENT_METHODS : registers
+  USERS ||--o{ SETTLEMENTS : pays
+  USERS ||--o{ MESSAGES : sends
+  USERS ||--o{ INVITE_CODES : creates
+
+  INVITE_CODES ||--o{ EMAIL_VERIFICATION_CHALLENGES : authorizes
+  RIDES ||--o{ RIDE_REQUESTS : receives
+  RIDES ||--o{ REVIEWS : reviewed_by
+  RIDES ||--o| CHAT_ROOMS : opens
+  RIDES ||--o{ SETTLEMENTS : settled_by
+  CHAT_ROOMS ||--o{ MESSAGES : contains
+
+  COMPANIES {
+    string id PK
+    string name
+    string invite_code UK
+    string domain
+    string admin_id FK
+    int max_members
+    Plan plan
+    datetime created_at
+    datetime updated_at
+  }
+
+  INVITE_CODES {
+    string id PK
+    string company_id FK
+    string code
+    string created_by FK
+    int max_uses
+    int current_uses
+    datetime expires_at
+    boolean is_active
+  }
+
+  EMAIL_VERIFICATION_CHALLENGES {
+    string id PK
+    string company_id FK
+    string invite_code_id FK
+    string company_email
+    string code_hash
+    datetime expires_at
+    datetime used_at
+    datetime resend_available_at
+    datetime created_at
+  }
+
+  USERS {
+    string id PK
+    string company_id FK
+    string employee_id
+    string email UK
+    string name
+    string phone
+    string image_url
+    string password_hash
+    datetime email_verified_at
+    Role role
+    decimal rating
+    int ride_count
+    boolean phone_verified
+    datetime created_at
+    datetime updated_at
+  }
+
+  VEHICLES {
+    string id PK
+    string user_id FK
+    string model
+    string color
+    string plate
+    int capacity
+    datetime created_at
+  }
+
+  RIDES {
+    string id PK
+    string company_id FK
+    string driver_id FK
+    decimal departure_lat
+    decimal departure_lng
+    string departure_addr
+    decimal arrival_lat
+    decimal arrival_lng
+    string arrival_addr
+    datetime departure_time
+    int available_seats
+    int fare
+    string recurring_days
+    datetime recurring_end
+    json preferences
+    RideStatus status
+    datetime created_at
+    datetime updated_at
+  }
+
+  RIDE_REQUESTS {
+    string id PK
+    string ride_id FK
+    string passenger_id FK
+    decimal pickup_lat
+    decimal pickup_lng
+    string pickup_addr
+    string message
+    RequestStatus status
+    datetime created_at
+    datetime updated_at
+  }
+
+  CHAT_ROOMS {
+    string id PK
+    string ride_id FK
+    datetime created_at
+  }
+
+  MESSAGES {
+    string id PK
+    string room_id FK
+    string sender_id FK
+    string content
+    MessageType type
+    datetime created_at
+  }
+
+  REVIEWS {
+    string id PK
+    string ride_id FK
+    string from_id FK
+    string to_id FK
+    int rating
+    string comment
+    datetime created_at
+  }
+
+  PAYMENT_METHODS {
+    string id PK
+    string user_id FK
+    string type
+    string billing_key
+    string alias
+    boolean is_default
+    datetime created_at
+  }
+
+  SETTLEMENTS {
+    string id PK
+    string ride_id FK
+    string passenger_id FK
+    string company_id FK
+    int amount
+    int driver_amount
+    int platform_fee
+    int company_fee
+    int passenger_fee
+    SettlementStatus status
+    datetime due_date
+    datetime paid_at
+    datetime created_at
+  }
 ```
-┌──────────────────┐      ┌──────────────────┐      ┌──────────────────┐
-│    companies      │      │   invite_codes   │      │      users       │
-├──────────────────┤      ├──────────────────┤      ├──────────────────┤
-│ id (PK)          │──┐   │ id (PK)          │      │ id (PK)          │
-│ name             │  │   │ company_id (FK)   │──┐   │ company_id (FK)  │──┐
-│ invite_code      │  │   │ code             │  │   │ employee_id      │  │
-│ domain           │  │   │ created_by (FK)  │  │   │ email            │  │
-│ admin_id (FK)    │  │   │ max_uses         │  │   │ name             │  │
-│ max_members      │  │   │ current_uses     │  │   │ phone            │  │
-│ plan             │  │   │ expires_at       │  │   │ image_url        │  │
-│ created_at       │  │   │ is_active        │  │   │ password_hash    │  │
-│ updated_at       │  │   └──────────────────┘  │   │ email_verified_at│  │
-└──────────────────┘  │                         │   │ role             │  │
-                      └─────────────────────────┘   │ rating           │  │
-                                                    │ ride_count       │  │
-┌─────────────┐                                     │ phone_verified   │  │
-│  vehicles   │                                     │ created_at       │  │
-├─────────────┤                                     │ updated_at       │  │
-│ id (PK)     │                                     └────────┬─────────┘  │
-│ user_id(FK) │──────────────────────────────────────────────┘            │
-│ model       │                                                          │
-│ color       │                                                          │
-│ plate       │                                                          │
-│ capacity    │     ┌──────────────────┐     ┌─────────────────┐         │
-│ created_at  │     │      rides       │     │  ride_requests  │         │
-└─────────────┘     ├──────────────────┤     ├─────────────────┤         │
-┌──────────────────────────────┐                                           │
-│ email_verification_challenges │                                           │
-├──────────────────────────────┤                                           │
-│ id (PK)                      │                                           │
-│ company_id (FK)              │                                           │
-│ invite_code_id (FK)          │                                           │
-│ company_email                │                                           │
-│ code_hash                    │                                           │
-│ expires_at / used_at         │                                           │
-│ resend_available_at          │                                           │
-└──────────────────────────────┘                                           │
-                    │ id (PK)          │     │ id (PK)         │         │
-┌─────────────┐     │ company_id (FK)  │──┐  │ ride_id (FK)    │         │
-│   reviews   │     │ driver_id (FK)   │  │  │ passenger_id(FK)│         │
-├─────────────┤     │ departure_lat    │  │  │ pickup_lat      │         │
-│ id (PK)     │     │ departure_lng    │  │  │ pickup_lng      │         │
-│ ride_id(FK) │     │ departure_addr   │  │  │ pickup_addr     │         │
-│ from_id(FK) │     │ arrival_lat      │  │  │ message         │         │
-│ to_id (FK)  │     │ arrival_lng      │  │  │ status          │         │
-│ rating      │     │ arrival_addr     │  │  │ created_at      │         │
-│ comment     │     │ departure_time   │  │  │ updated_at      │         │
-│ created_at  │     │ available_seats  │  │  └─────────────────┘         │
-└─────────────┘     │ fare             │  │                               │
-                    │ recurring_days   │  │  ┌─────────────────┐          │
-┌──────────────────┐│ recurring_end    │  │  │   chat_rooms    │          │
-│  payment_methods ││ preferences      │  │  ├─────────────────┤          │
-├──────────────────┤│ status           │  │  │ id (PK)         │          │
-│ id (PK)          ││ created_at       │  │  │ ride_id (FK)    │          │
-│ user_id (FK)     ││ updated_at       │  │  │ created_at      │          │
-│ type             │└──────────────────┘  │  └────────┬────────┘          │
-│ billing_key      │                      │           │                   │
-│ alias            │     ┌──────────────────┐  ┌───────▼─────────┐       │
-│ is_default       │     │   settlements    │  │   messages       │       │
-│ created_at       │     ├──────────────────┤  ├─────────────────┤       │
-└──────────────────┘     │ id (PK)          │  │ id (PK)         │       │
-                          │ ride_id (FK)     │  │ room_id (FK)    │       │
-                          │ passenger_id(FK) │  │ sender_id (FK)  │       │
-                          │ company_id (FK)  │  │ content         │       │
-                          │ amount           │  │ type            │       │
-                          │ driver_amount    │  │ created_at      │       │
-                          │ platform_fee     │  └─────────────────┘       │
-                          │ company_fee      │                            │
-                          │ passenger_fee    │                            │
-                          │ status           │                            │
-                          │ due_date         │                            │
-                          │ paid_at          │                            │
-                         │ created_at       │                            │
-                         └──────────────────┘                            │
-                                                                        │
-             같은 company_id/domain 끼리만 매칭 ◀──────────────────────────┘
-```
+
+> 매칭/요청/정산/채팅은 같은 `company_id` 경계 안에서만 허용한다. 가입 시 `Company.domain`, `InviteCode`, `EmailVerificationChallenge` 검증이 모두 성공해야 `User.company_id`가 확정된다.
 
 ---
 

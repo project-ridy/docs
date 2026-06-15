@@ -12,6 +12,34 @@
 4. backend가 인증코드를 검증하고 비밀번호 해시를 저장한 뒤 AuthPayload를 발급한다.
 5. 기존 사용자는 회사 이메일 + 비밀번호로 로그인한다.
 
+```mermaid
+sequenceDiagram
+  autonumber
+  actor User as 사용자
+  participant FE as Frontend
+  participant Auth as Auth Resolver/Service
+  participant DB as PostgreSQL/Prisma
+  participant Mail as Email Provider
+
+  User->>FE: 가입 코드 + 회사 이메일 입력
+  FE->>Auth: requestCompanyEmailVerification(input)
+  Auth->>DB: InviteCode + Company.domain + 기존 User 검증
+  Auth->>DB: EmailVerificationChallenge 생성(codeHash 저장)
+  Auth->>Mail: 6자리 인증코드 발송
+  Auth-->>FE: challengeId, expiresAt, resendAvailableAt
+
+  User->>FE: 인증코드 + 비밀번호 입력
+  FE->>Auth: completeEmailPasswordSignup(input)
+  Auth->>DB: challenge 만료/사용/codeHash 검증
+  Auth->>DB: transaction(User 생성, usedAt 설정, currentUses 증가)
+  Auth-->>FE: AuthPayload(accessToken, refreshToken, user)
+
+  User->>FE: 회사 이메일 + 비밀번호 로그인
+  FE->>Auth: login(input)
+  Auth->>DB: User.email + passwordHash + emailVerifiedAt 검증
+  Auth-->>FE: AuthPayload(accessToken, refreshToken, user)
+```
+
 ---
 
 ## GraphQL 스키마
