@@ -48,13 +48,13 @@
 ```markdown
 ### POST /auth/login
 
-소셜 제공자의 토큰으로 로그인/회원가입 처리
+회사 이메일과 비밀번호로 로그인 처리
 
 **Request:**
 ```json
 {
-  "provider": "kakao" | "google" | "apple",
-  "accessToken": "string"
+  "companyEmail": "jane@company.com",
+  "password": "string"
 }
 ```
 
@@ -73,7 +73,7 @@
 **Error Responses:**
 | 상태 코드 | 에러 코드 | 설명 |
 |---|---|---|
-| 401 | INVALID_TOKEN | 유효하지 않은 소셜 토큰 |
+| 401 | INVALID_CREDENTIALS | 이메일 또는 비밀번호 불일치 |
 | 400 | MISSING_FIELDS | 필수 필드 누락 |
 ```
 
