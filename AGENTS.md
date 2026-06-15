@@ -28,7 +28,7 @@
 - 에이전트 스펙/프로토콜/기획서/작업 큐 변경은 `project-ridy/agents` 레포에서 처리
 
 ### 작업 분배 기준
-- 구현 계획서는 `planning/implementation/`에 저장한다.
+- 구현 계획서는 대상 레포별로 `planning/implementation/frontend/` 또는 `planning/implementation/backend/`에 저장한다.
 - Orchestrator가 구현 계획서 리뷰 & 승인 후 Frontend Developer/Backend Developer/Designer 에이전트에 작업 할당
 - 할당 시 이슈 번호, 관련 기획서 경로, 관련 docs 문서 경로, 완료 조건을 명확히 전달
 - Frontend Developer/Backend Developer/Designer PR이 기획서 + docs 스펙과 일치하는지 검증

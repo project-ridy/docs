@@ -10,7 +10,7 @@
    - 가능한 경우 이슈 상태를 `In Progress`로 변경한다.
 
 2. **작업 전 Planner가 구현 계획서를 먼저 작성한다.**
-   - 계획서는 반드시 `docs/planning/implementation/`에 저장한다.
+   - 계획서는 반드시 대상 레포별로 `docs/planning/implementation/frontend/` 또는 `docs/planning/implementation/backend/`에 저장한다.
    - 로컬 작업 편의를 위해 `.hermes/plans/`에도 같은 내용을 둘 수 있다.
    - 구현자는 계획서의 A/E/X 케이스, 파일 경로, 검증 명령을 기준으로 작업한다.
 
@@ -18,7 +18,7 @@
    - API: `docs/api/`
    - DB/아키텍처: `docs/architecture/`
    - 디자인/화면: `docs/design/`
-   - 이슈별 구현 계획: `docs/planning/implementation/`
+   - 이슈별 구현 계획: `docs/planning/implementation/frontend/`, `docs/planning/implementation/backend/`
    - docs에 없는 스펙은 임의로 구현하지 않고 BLOCKED로 보고한다.
 
 4. **main 브랜치에 직접 커밋하지 않는다.**
@@ -62,14 +62,14 @@
 계획서는 다음 형식으로 작성한다.
 
 ```txt
-planning/implementation/YYYY-MM-DD_<repo><issue>-<short-name>.md
+planning/implementation/<repo>/YYYY-MM-DD_<repo><issue>-<short-name>.md
 ```
 
 예시:
 
 ```txt
-planning/implementation/2026-06-11_be13-invite-code-system.md
-planning/implementation/2026-06-11_fe04-login-onboarding.md
+planning/implementation/backend/2026-06-11_be13-invite-code-system.md
+planning/implementation/frontend/2026-06-11_fe04-login-onboarding.md
 ```
 
 계획서에는 반드시 포함한다.
@@ -199,7 +199,7 @@ git push origin --delete <branch>
 ### docs
 
 - 제품/기술/디자인 스펙의 SSoT이다.
-- 구현 계획서는 `planning/implementation/`에 저장한다.
+- 구현 계획서는 대상 레포별로 `planning/implementation/frontend/` 또는 `planning/implementation/backend/`에 저장한다.
 - API/DB/디자인 변경 시 관련 문서를 함께 갱신한다.
 
 ### backend

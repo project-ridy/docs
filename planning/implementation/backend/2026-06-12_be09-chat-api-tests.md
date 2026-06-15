@@ -8,7 +8,7 @@
 
 ## 관련 docs 문서
 
-- `docs/planning/implementation/2026-06-12_be08-chat-websocket-server.md`
+- `docs/planning/implementation/backend/2026-06-12_be08-chat-websocket-server.md`
 - `docs/api/CHAT.md`
 - `docs/api/GRAPHQL_GATEWAY.md`
 - `docs/architecture/DATABASE.md`

@@ -96,7 +96,7 @@
 - 관련 문서:
   - `docs/api/MATCHING.md`
   - `docs/architecture/DATABASE.md`
-  - `docs/planning/implementation/2026-06-12_be06-matching-api.md`
+  - `docs/planning/implementation/backend/2026-06-12_be06-matching-api.md`
 
 ## 검증 명령
 
