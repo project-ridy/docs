@@ -58,14 +58,17 @@
 │ is_default       │     │   settlements    │  │   messages       │       │
 │ created_at       │     ├──────────────────┤  ├─────────────────┤       │
 └──────────────────┘     │ id (PK)          │  │ id (PK)         │       │
-                         │ ride_id (FK)     │  │ room_id (FK)    │       │
-                         │ passenger_id(FK) │  │ sender_id (FK)  │       │
-                         │ amount           │  │ content         │       │
-                         │ driver_amount    │  │ type            │       │
-                         │ platform_fee     │  │ created_at      │       │
-                         │ status           │  └─────────────────┘       │
-                         │ due_date         │                            │
-                         │ paid_at          │                            │
+                          │ ride_id (FK)     │  │ room_id (FK)    │       │
+                          │ passenger_id(FK) │  │ sender_id (FK)  │       │
+                          │ company_id (FK)  │  │ content         │       │
+                          │ amount           │  │ type            │       │
+                          │ driver_amount    │  │ created_at      │       │
+                          │ platform_fee     │  └─────────────────┘       │
+                          │ company_fee      │                            │
+                          │ passenger_fee    │                            │
+                          │ status           │                            │
+                          │ due_date         │                            │
+                          │ paid_at          │                            │
                          │ created_at       │                            │
                          └──────────────────┘                            │
                                                                         │
@@ -84,8 +87,8 @@ model Company {
   id          String   @id @default(uuid())
   name        String   @db.VarChar(100)                    // 기업명
   inviteCode  String   @unique @map("invite_code") @db.VarChar(20) // 기업 고유 초대 코드
-  domain      String   @db.VarChar(100)                    // 이메일 도메인 (검증용, 예: "acme.co.kr")
-  adminId     String   @map("admin_id")                    // 최초 관리자 user.id
+  domain      String?  @db.VarChar(100)                    // 이메일 도메인 (검증용, 예: "acme.co.kr")
+  adminId     String   @unique @map("admin_id")             // 최초 관리자 user.id
   maxMembers  Int      @default(50) @map("max_members")    // 최대 구성원 수
   plan        Plan     @default(FREE)                      // 요금제
 
@@ -99,6 +102,7 @@ model Company {
   rides       Ride[]
   settlements Settlement[]
 
+  @@index([domain])
   @@map("companies")
 }
 
@@ -114,7 +118,7 @@ enum Plan {
 model InviteCode {
   id          String    @id @default(uuid())
   companyId   String    @map("company_id")
-  code        String    @db.VarChar(6)                      // 6자리 영숽�드
+  code        String    @db.VarChar(6)                      // 6자리 영숫자
   createdBy   String    @map("created_by")
   maxUses     Int       @default(10) @map("max_uses")       // 최대 사용 횟수
   currentUses Int       @default(0) @map("current_uses")    // 현재 사용 횟수
@@ -126,6 +130,8 @@ model InviteCode {
   creator     User      @relation("InviteCodeCreator", fields: [createdBy], references: [id])
 
   @@unique([companyId, code])
+  @@index([createdBy])
+  @@index([companyId, isActive, expiresAt])
   @@map("invite_codes")
 }
 
@@ -163,6 +169,9 @@ model User {
   adminOf       Company?       @relation("CompanyAdmin", fields: [id], references: [adminId])
 
   @@unique([companyId, employeeId]) // 같은 기업 내 사번 중복 방지
+  @@index([companyId])
+  @@index([provider, providerId])
+  @@index([companyId, role])
   @@map("users")
 }
 
@@ -193,6 +202,8 @@ model Vehicle {
 
   user      User     @relation(fields: [userId], references: [id])
 
+  @@unique([userId, plate])
+  @@index([userId])
   @@map("vehicles")
 }
 
@@ -228,6 +239,9 @@ model Ride {
   settlements     Settlement[]
   chatRoom        ChatRoom?
 
+  @@index([companyId, status, departureTime])
+  @@index([companyId, departureTime])
+  @@index([driverId, departureTime])
   @@map("rides")
 }
 
@@ -259,6 +273,9 @@ model RideRequest {
   ride         Ride            @relation(fields: [rideId], references: [id])
   passenger    User            @relation(fields: [passengerId], references: [id])
 
+  @@unique([rideId, passengerId])
+  @@index([passengerId, status])
+  @@index([rideId, status])
   @@map("ride_requests")
 }
 
@@ -286,6 +303,9 @@ model Review {
   fromUser  User     @relation("ReviewFrom", fields: [fromId], references: [id])
   toUser    User     @relation("ReviewTo", fields: [toId], references: [id])
 
+  @@unique([rideId, fromId, toId])
+  @@index([toId])
+  @@index([fromId])
   @@map("reviews")
 }
 
@@ -296,9 +316,12 @@ model Settlement {
   id           String          @id @default(uuid())
   rideId       String          @map("ride_id")
   passengerId  String          @map("passenger_id")
+  companyId    String?         @map("company_id")
   amount       Int                                       // 승객 결제 금액
   driverAmount Int             @map("driver_amount")      // 차주 수령 금액
   platformFee  Int             @map("platform_fee")       // 플랫폼 수수료
+  companyFee   Int             @default(0) @map("company_fee")
+  passengerFee Int             @default(0) @map("passenger_fee")
   status       SettlementStatus @default(PENDING)
   dueDate      DateTime?       @map("due_date")
   paidAt       DateTime?       @map("paid_at")
@@ -309,6 +332,9 @@ model Settlement {
   passenger    User            @relation(fields: [passengerId], references: [id])
   company      Company?        @relation(fields: [companyId], references: [id]) // 선택: 기업별 정산 조회
 
+  @@index([companyId, status, createdAt])
+  @@index([rideId])
+  @@index([passengerId, status])
   @@map("settlements")
 }
 
@@ -334,6 +360,7 @@ model PaymentMethod {
 
   user        User     @relation(fields: [userId], references: [id])
 
+  @@index([userId, isDefault])
   @@map("payment_methods")
 }
 
@@ -349,6 +376,7 @@ model ChatRoom {
   ride      Ride      @relation(fields: [rideId], references: [id])
   messages  Message[]
 
+  @@index([createdAt])
   @@map("chat_rooms")
 }
 
@@ -367,6 +395,8 @@ model Message {
   room      ChatRoom @relation(fields: [roomId], references: [id])
   sender    User     @relation(fields: [senderId], references: [id])
 
+  @@index([roomId, createdAt])
+  @@index([senderId, createdAt])
   @@map("messages")
 }
 
@@ -388,12 +418,12 @@ enum MessageType {
 | id | UUID | PK | 기업 고유 ID |
 | name | VARCHAR(100) | NOT NULL | 기업명 |
 | invite_code | VARCHAR(20) | UNIQUE | 기업 고유 초대 코드 (가입 시 사용) |
-| domain | VARCHAR(100) | | 이메일 도메인 (예: `acme.co.kr`). 도메인 기반 자동 소속 검증용 |
-| admin_id | UUID | FK → users | 기업 관리자 (최초 생성자) |
+| domain | VARCHAR(100) | NULL, INDEX | 이메일 도메인 (예: `acme.co.kr`). 도메인 기반 자동 소속 검증용 |
+| admin_id | UUID | FK → users, UNIQUE, NOT NULL | 기업 관리자 (최초 생성자). 한 유저는 한 회사의 대표 관리자만 될 수 있음 |
 | max_members | INT | DEFAULT 50 | 최대 구성원 수 (요금제별 상이) |
 | plan | ENUM | DEFAULT FREE | FREE / PRO / ENTERPRISE |
-| created_at | TIMESTAMP | | 생성일 |
-| updated_at | TIMESTAMP | | 수정일 |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT now() | 생성일 |
+| updated_at | TIMESTAMP | NOT NULL, auto-update | 수정일 |
 
 **plan별 기본 max_members**:
 | plan | max_members | 비고 |
@@ -417,6 +447,11 @@ enum MessageType {
 
 **제약**: `(company_id, code)` 복합 유니크 — 같은 기업 내 코드 중복 방지
 
+**인덱스**:
+- `(company_id, code)` UNIQUE: 초대 코드 검증
+- `(company_id, is_active, expires_at)`: 활성 초대 코드 목록/만료 검증
+- `(created_by)`: 관리자별 발급 코드 조회
+
 ### users
 
 | 컬럼 | 타입 | 제약 | 설명 |
@@ -428,15 +463,21 @@ enum MessageType {
 | name | VARCHAR(100) | NOT NULL | 이름 |
 | phone | VARCHAR(20) | | 전화번호 |
 | image_url | TEXT | | 프로필 이미지 |
-| provider | ENUM | | kakao, google, apple |
+| provider | ENUM | NULL | KAKAO, GOOGLE |
 | provider_id | VARCHAR(255) | | 소셜 ID |
 | role | ENUM | DEFAULT PASSENGER | PASSENGER, DRIVER, BOTH, ADMIN |
 | rating | DECIMAL(2,1) | DEFAULT 0.0 | 평균 평점 |
 | ride_count | INT | DEFAULT 0 | 운행 횟수 |
-| created_at | TIMESTAMP | | 생성일 |
-| updated_at | TIMESTAMP | | 수정일 |
+| phone_verified | BOOLEAN | DEFAULT false | 휴대폰 인증 여부 |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT now() | 생성일 |
+| updated_at | TIMESTAMP | NOT NULL, auto-update | 수정일 |
 
 **제약**: `(company_id, employee_id)` 복합 유니크 — 같은 기업 내 사번 중복 방지
+
+**인덱스**:
+- `(company_id)`: 기업 구성원 목록
+- `(company_id, role)`: 기업 관리자/차주/탑승자 필터
+- `(provider, provider_id)`: 소셜 로그인 계정 조회
 
 ### rides
 
@@ -458,8 +499,13 @@ enum MessageType {
 | recurring_end | DATE | | 정기 카풀 종료일 |
 | preferences | JSONB | | smoking, pet, luggage 등 |
 | status | ENUM | | OPEN, MATCHED, IN_PROGRESS, COMPLETED, CANCELLED |
-| created_at | TIMESTAMP | | |
-| updated_at | TIMESTAMP | | |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT now() | 생성일 |
+| updated_at | TIMESTAMP | NOT NULL, auto-update | 수정일 |
+
+**인덱스**:
+- `(company_id, status, departure_time)`: 같은 기업의 오픈 운행 검색 및 출발 시각 정렬
+- `(company_id, departure_time)`: 기업별 기간 조회/통계
+- `(driver_id, departure_time)`: 차주별 운행 이력
 
 ### ride_requests
 
@@ -473,8 +519,14 @@ enum MessageType {
 | pickup_addr | VARCHAR(255) | | 픽업 주소 |
 | message | TEXT | | 요청 메시지 |
 | status | ENUM | | PENDING, ACCEPTED, REJECTED, CANCELLED |
-| created_at | TIMESTAMP | | |
-| updated_at | TIMESTAMP | | |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT now() | 생성일 |
+| updated_at | TIMESTAMP | NOT NULL, auto-update | 수정일 |
+
+**제약**: `(ride_id, passenger_id)` 복합 유니크 — 같은 탑승자가 같은 운행에 중복 요청하는 것을 방지
+
+**인덱스**:
+- `(passenger_id, status)`: 탑승자의 요청 목록/상태 필터
+- `(ride_id, status)`: 운행별 요청 목록/수락 대기 조회
 
 ### reviews
 
@@ -486,7 +538,13 @@ enum MessageType {
 | to_id | UUID | FK → users | 대상자 |
 | rating | INT | 1~5 | 평점 |
 | comment | TEXT | | 코멘트 |
-| created_at | TIMESTAMP | | |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT now() | 생성일 |
+
+**제약**: `(ride_id, from_id, to_id)` 복합 유니크 — 같은 운행에서 같은 대상에게 중복 리뷰 작성 방지
+
+**인덱스**:
+- `(to_id)`: 받은 리뷰/평점 집계
+- `(from_id)`: 작성 리뷰 이력
 
 ### settlements
 
@@ -495,13 +553,21 @@ enum MessageType {
 | id | UUID | PK | 정산 ID |
 | ride_id | UUID | FK → rides | 운행 |
 | passenger_id | UUID | FK → users | 승객 |
+| company_id | UUID | FK → companies, NULL | 기업별 정산 조회용 비정규화 키. 신규 데이터는 ride.company_id를 복사 저장 |
 | amount | INT | | 승객 결제 금액 |
 | driver_amount | INT | | 차주 수령 금액 |
 | platform_fee | INT | | 플랫폼 수수료 |
+| company_fee | INT | DEFAULT 0 | 기업 부담 금액 |
+| passenger_fee | INT | DEFAULT 0 | 탑승자 부담 금액 |
 | status | ENUM | | PENDING, COMPLETED, FAILED, REFUNDED |
 | due_date | TIMESTAMP | | 정산 예정일 |
 | paid_at | TIMESTAMP | | 정산 완료일 |
-| created_at | TIMESTAMP | | |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT now() | 생성일 |
+
+**인덱스**:
+- `(company_id, status, created_at)`: 기업 관리자 정산 대시보드
+- `(ride_id)`: 운행별 정산 조회
+- `(passenger_id, status)`: 사용자별 결제/정산 상태 조회
 
 ### payment_methods
 
@@ -513,7 +579,10 @@ enum MessageType {
 | billing_key | VARCHAR(255) | | 빌링 키 |
 | alias | VARCHAR(50) | | 별칭 |
 | is_default | BOOLEAN | DEFAULT false | 기본 결제수단 여부 |
-| created_at | TIMESTAMP | | |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT now() | 생성일 |
+
+**인덱스**:
+- `(user_id, is_default)`: 사용자 기본 결제수단 조회
 
 ### chat_rooms
 
@@ -521,7 +590,10 @@ enum MessageType {
 |---|---|---|---|
 | id | UUID | PK | 채팅방 ID |
 | ride_id | UUID | FK → rides, UNIQUE | 연결된 운행 |
-| created_at | TIMESTAMP | | |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT now() | 생성일 |
+
+**인덱스**:
+- `(created_at)`: 운영/관리용 최근 채팅방 조회
 
 ### messages
 
@@ -532,7 +604,11 @@ enum MessageType {
 | sender_id | UUID | FK → users | 발신자 |
 | content | TEXT | | 내용 |
 | type | ENUM | | TEXT, IMAGE, SYSTEM |
-| created_at | TIMESTAMP | | |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT now() | 생성일 |
+
+**인덱스**:
+- `(room_id, created_at)`: 채팅방 메시지 페이지네이션
+- `(sender_id, created_at)`: 사용자별 발신 이력/운영 감사
 
 ---
 
@@ -708,18 +784,159 @@ JOIN companies c ON c.id = ic.company_id;
 
 ## 인덱스 전략
 
+인덱스는 “기업 격리 조건을 먼저 태우고, 그 다음 상태/시간 정렬 조건을 태운다”는 원칙을 따른다. Prisma 스키마의 `@@index`/`@@unique`가 우선이며, 아래 SQL 이름은 실제 PostgreSQL 마이그레이션에서 사용할 권장 명명이다.
+
+### 기업/가입
+
 ```sql
--- 기업 격리 쿼리 최적화
-CREATE INDEX idx_users_company_id ON users(company_id);
-CREATE INDEX idx_rides_company_id_status ON rides(company_id, status);
-CREATE INDEX idx_rides_company_id_departure ON rides(company_id, departure_time);
-CREATE INDEX idx_ride_requests_passenger ON ride_requests(passenger_id);
-CREATE INDEX idx_invite_codes_company_code ON invite_codes(company_id, code);
-CREATE INDEX idx_settlements_ride_company ON settlements(ride_id);
-
--- 사번 검색
-CREATE INDEX idx_users_company_employee ON users(company_id, employee_id);
-
--- 이메일 도메인 검증
+-- 기업 고유 초대 코드 및 도메인 검증
+CREATE UNIQUE INDEX companies_invite_code_key ON companies(invite_code);
+CREATE UNIQUE INDEX companies_admin_id_key ON companies(admin_id);
 CREATE INDEX idx_companies_domain ON companies(domain);
+
+-- 초대 코드 검증: company_id + code는 유니크, 활성 코드 목록은 company_id/is_active/expires_at 기준
+CREATE UNIQUE INDEX invite_codes_company_id_code_key ON invite_codes(company_id, code);
+CREATE INDEX idx_invite_codes_created_by ON invite_codes(created_by);
+CREATE INDEX idx_invite_codes_company_active_expires ON invite_codes(company_id, is_active, expires_at);
 ```
+
+### 사용자/차량
+
+```sql
+-- 기업 구성원 목록과 역할 필터
+CREATE INDEX idx_users_company_id ON users(company_id);
+CREATE INDEX idx_users_company_role ON users(company_id, role);
+
+-- 같은 기업 내 사번 중복 방지
+CREATE UNIQUE INDEX users_company_id_employee_id_key ON users(company_id, employee_id);
+
+-- 소셜 로그인 provider 계정 조회
+CREATE INDEX idx_users_provider_provider_id ON users(provider, provider_id);
+
+-- 사용자 차량 조회 및 사용자별 차량번호 중복 방지
+CREATE UNIQUE INDEX vehicles_user_id_plate_key ON vehicles(user_id, plate);
+CREATE INDEX idx_vehicles_user_id ON vehicles(user_id);
+```
+
+### 운행/요청/리뷰
+
+```sql
+-- 같은 기업의 오픈 운행 검색과 시간 정렬
+CREATE INDEX idx_rides_company_status_departure ON rides(company_id, status, departure_time);
+CREATE INDEX idx_rides_company_departure ON rides(company_id, departure_time);
+CREATE INDEX idx_rides_driver_departure ON rides(driver_id, departure_time);
+
+-- 요청 중복 방지 및 상태 필터
+CREATE UNIQUE INDEX ride_requests_ride_id_passenger_id_key ON ride_requests(ride_id, passenger_id);
+CREATE INDEX idx_ride_requests_passenger_status ON ride_requests(passenger_id, status);
+CREATE INDEX idx_ride_requests_ride_status ON ride_requests(ride_id, status);
+
+-- 리뷰 중복 방지와 평점 집계
+CREATE UNIQUE INDEX reviews_ride_id_from_id_to_id_key ON reviews(ride_id, from_id, to_id);
+CREATE INDEX idx_reviews_to_id ON reviews(to_id);
+CREATE INDEX idx_reviews_from_id ON reviews(from_id);
+```
+
+### 정산/결제/채팅
+
+```sql
+-- 기업 관리자 정산 대시보드 및 사용자별 결제/정산 이력
+CREATE INDEX idx_settlements_company_status_created ON settlements(company_id, status, created_at);
+CREATE INDEX idx_settlements_ride_id ON settlements(ride_id);
+CREATE INDEX idx_settlements_passenger_status ON settlements(passenger_id, status);
+
+-- 기본 결제수단 조회
+CREATE INDEX idx_payment_methods_user_default ON payment_methods(user_id, is_default);
+
+-- 운행별 단일 채팅방, 메시지 페이지네이션
+CREATE UNIQUE INDEX chat_rooms_ride_id_key ON chat_rooms(ride_id);
+CREATE INDEX idx_chat_rooms_created_at ON chat_rooms(created_at);
+CREATE INDEX idx_messages_room_created ON messages(room_id, created_at);
+CREATE INDEX idx_messages_sender_created ON messages(sender_id, created_at);
+```
+
+### 체크/서비스 제약
+
+Prisma 7의 schema-first 사용 범위 안에서 표현되지 않거나 DB별 DDL이 필요한 제약은 서비스 레이어와 마이그레이션 SQL에서 같이 관리한다.
+
+| 대상 | 제약 | 구현 위치 |
+|---|---|---|
+| `users.rating` | `0.0 <= rating <= 5.0` | 서비스 레이어 검증 + PostgreSQL CHECK |
+| `reviews.rating` | `1 <= rating <= 5` | 서비스 레이어 검증 + PostgreSQL CHECK |
+| `vehicles.capacity` | `1 <= capacity <= 8` | 서비스 레이어 검증 + PostgreSQL CHECK |
+| `rides.available_seats` | `available_seats >= 1` | 서비스 레이어 검증 + PostgreSQL CHECK |
+| `rides.fare` | `fare IS NULL OR fare >= 0` | 서비스 레이어 검증 + PostgreSQL CHECK |
+| `invite_codes.current_uses` | `0 <= current_uses <= max_uses` | 트랜잭션 업데이트 + PostgreSQL CHECK |
+| `settlements.amount/driver_amount/platform_fee/company_fee/passenger_fee` | 모든 금액 `>= 0`, `amount = driver_amount + platform_fee + company_fee + passenger_fee` 정책은 요금제별 서비스 로직에서 검증 | 서비스 레이어 검증 + 선택적 CHECK |
+
+## 마이그레이션 전략
+
+Ridy는 MVP 중에도 기업 단위 폐쇄형 모델을 유지해야 하므로, DB 변경은 **expand → backfill → validate → contract** 순서로 진행한다. 모든 마이그레이션은 `docs/architecture/DATABASE.md` 변경 후 backend Prisma schema에 반영한다.
+
+### 1. 사전 검증
+
+1. 변경 전 `docs/architecture/DATABASE.md`, `docs/architecture/ARCHITECTURE.md`, `backend/prisma/schema.prisma`의 모델/컬럼/enum 이름을 대조한다.
+2. GraphQL schema/API 문서에서 새 필드가 노출되는 경우 `docs/api/` 문서를 먼저 갱신한다.
+3. 기업 격리 키(`company_id`)가 필요한 테이블은 nullable 도입 → backfill → NOT NULL 전환 순서로 진행한다.
+
+### 2. Expand 단계
+
+1. 새 컬럼은 먼저 nullable 또는 안전한 default와 함께 추가한다.
+2. 새 인덱스는 운영 DB에서는 동시 생성(`CREATE INDEX CONCURRENTLY`)을 우선한다. Prisma migrate가 concurrent index를 직접 표현하지 못하면 수동 SQL migration을 사용한다.
+3. FK는 기존 데이터 정합성 확인 후 추가한다. 데이터 양이 크면 FK validation을 별도 단계로 분리한다.
+
+### 3. Backfill 단계
+
+대표 예시는 `settlements.company_id` 도입이다.
+
+```sql
+UPDATE settlements s
+SET company_id = r.company_id
+FROM rides r
+WHERE s.ride_id = r.id
+  AND s.company_id IS NULL;
+```
+
+Backfill 후 다음 검증 쿼리를 실행한다.
+
+```sql
+SELECT COUNT(*) AS missing_company_id
+FROM settlements
+WHERE company_id IS NULL;
+
+SELECT COUNT(*) AS cross_company_settlements
+FROM settlements s
+JOIN rides r ON r.id = s.ride_id
+WHERE s.company_id IS NOT NULL
+  AND s.company_id <> r.company_id;
+```
+
+두 결과가 모두 `0`이어야 contract 단계로 넘어갈 수 있다.
+
+### 4. Validate 단계
+
+Backend repo에서 아래 명령을 실행한다.
+
+```bash
+npx prisma validate
+npx prisma generate
+npm run codegen
+npm run test
+npm run lint
+npm run build
+```
+
+GraphQL/Prisma 변경이 없는 순수 docs 변경은 backend 명령을 실행하지 않아도 되지만, PR 본문에는 “문서 변경만 수행, backend 스키마 미수정”이라고 명시한다.
+
+### 5. Contract 단계
+
+1. Backfill 완료 후 nullable 필드를 NOT NULL로 전환할지 결정한다. 현재 `settlements.company_id`는 기존 데이터 호환 때문에 nullable로 유지하되, 신규 생성 서비스는 반드시 값을 저장한다.
+2. 더 이상 사용하지 않는 컬럼/인덱스는 한 릴리스 이상 관찰 후 제거한다.
+3. 제거 전 관련 GraphQL operation, resolver/service, 프론트 generated type 사용처를 검색한다.
+
+### 6. 롤백 원칙
+
+1. Expand 단계의 컬럼/인덱스 추가는 기능 플래그 또는 코드 미사용 상태로 배포하여 롤백 부담을 낮춘다.
+2. Backfill은 idempotent SQL로 작성해 재실행 가능해야 한다.
+3. Contract 단계의 삭제/NOT NULL 전환은 롤백이 어렵기 때문에 별도 PR로 분리한다.
+4. 마이그레이션 실패 시 애플리케이션 코드는 이전 스키마와 호환되는 버전으로 되돌리고, 데이터 보정 SQL은 별도 운영 승인 후 실행한다.
