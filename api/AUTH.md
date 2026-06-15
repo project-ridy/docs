@@ -2,7 +2,7 @@
 
 ## 개요
 
-초대 코드 기반 가입 + 소셜 로그인(카카오/구글). 같은 회사 사원만 가입 가능.
+가입 코드 + 회사 이메일 검증 + 소셜 로그인(카카오/구글). 같은 회사 이메일 도메인 구성원만 가입 가능.
 
 ---
 
@@ -71,6 +71,7 @@ type InviteCode {
 
 input JoinInput {
   inviteCode: String!
+  companyEmail: String!
   provider: String!
   oauthToken: String!
 }
@@ -111,40 +112,43 @@ type Mutation {
 
 ---
 
-## 기능: 초대 코드 가입 (`joinWithInviteCode`)
+## 기능: 가입 코드 기반 가입 (`joinWithInviteCode`)
 
 ### 설명
 
-기업 관리자가 발급한 초대 코드 + 소셜 OAuth 토큰으로 가입. 코드 검증 후 회사에 자동 매핑.
+운영자가 배포한 가입 코드, 회사 이메일, 소셜 OAuth 토큰으로 가입한다. 가입 코드를 검증한 뒤 `companyEmail`의 도메인이 `Company.domain`과 일치하는지 확인하고, OAuth 계정 이메일도 같은 도메인이어야 한다. 검증이 끝나면 해당 회사에 자동 매핑한다.
 
 ### 정상 케이스
 
 | # | 케이스 | 입력 | 기대 결과 |
 |---|--------|------|-----------|
-| A1 | 정상 가입 | 유효한 초대 코드 + 카카오 토큰 | AuthPayload 발급, user.companyId 설정 |
-| A2 | 구글 가입 | 유효한 초대 코드 + 구글 토큰 | 동일하게 가입 성공 |
+| A1 | 정상 가입 | 유효한 가입 코드 + 회사 이메일 + 카카오 토큰 | AuthPayload 발급, user.companyId 설정 |
+| A2 | 구글 가입 | 유효한 가입 코드 + 회사 이메일 + 구글 토큰 | 동일하게 가입 성공 |
 | A3 | 만료 임박 코드 | expiresAt 1시간 전 코드 | 가입 성공 (아직 유효) |
 
 ### 예외 케이스
 
 | # | 케이스 | 입력 | 기대 결과 |
 |---|--------|------|-----------|
-| E1 | 잘못된 초대 코드 | 존재하지 않는 코드 | `NOT_FOUND: 유효하지 않은 초대 코드입니다` |
-| E2 | 만료된 코드 | expiresAt 경과 | `BAD_REQUEST: 만료된 초대 코드입니다` |
-| E3 | 사용 한도 초과 | currentUses >= maxUses | `BAD_REQUEST: 초대 코드 사용 한도가 초과되었습니다` |
-| E4 | 비활성화된 코드 | isActive=false | `BAD_REQUEST: 비활성화된 초대 코드입니다` |
+| E1 | 잘못된 가입 코드 | 존재하지 않는 코드 | `NOT_FOUND: 유효하지 않은 가입 코드입니다` |
+| E2 | 만료된 코드 | expiresAt 경과 | `BAD_REQUEST: 만료된 가입 코드입니다` |
+| E3 | 사용 한도 초과 | currentUses >= maxUses | `BAD_REQUEST: 가입 코드 사용 한도가 초과되었습니다` |
+| E4 | 비활성화된 코드 | isActive=false | `BAD_REQUEST: 비활성화된 가입 코드입니다` |
 | E5 | 회원 정원 초과 | company.memberCount >= maxMembers | `BAD_REQUEST: 회사 정원이 초과되었습니다` |
 | E6 | 이미 가입된 이메일 | 기존 유저 이메일 | `CONFLICT: 이미 가입된 계정입니다` |
 | E7 | 빈 OAuth 토큰 | oauthToken="" | `UNAUTHORIZED: OAuth 토큰이 필요합니다` |
 | E8 | 지원하지 않는 provider | provider="naver" | `BAD_REQUEST: 지원하지 않는 로그인 방식입니다` |
 | E9 | 만료된 소셜 토큰 | 카카오에서 토큰 거절 | `UNAUTHORIZED: 소셜 로그인에 실패했습니다` |
+| E10 | 회사 이메일 누락 | companyEmail="" | `BAD_REQUEST: 회사 이메일은 필수입니다` |
+| E11 | 회사 이메일 도메인 불일치 | company.domain과 다른 companyEmail | `FORBIDDEN: 회사 이메일 도메인이 일치하지 않습니다` |
+| E12 | OAuth 이메일 도메인 불일치 | OAuth 이메일과 companyEmail 도메인 불일치 | `FORBIDDEN: OAuth 계정 이메일과 회사 이메일이 일치하지 않습니다` |
 
 ### 엣지 케이스
 
 | # | 케이스 | 설명 | 기대 결과 |
 |---|--------|------|-----------|
 | X1 | 동시 가입 | 같은 코드로 2명 동시 가입 (maxUses=1) | 1명만 성공, 나머지 E3 |
-| X2 | 이메일 도메인 불일치 | 회사 domain과 다른 이메일 | 가입은 허용 (도메인 검증은 선택) |
+| X2 | 이메일 도메인 대소문자 차이 | `Acme.CO.KR` vs `acme.co.kr` | 정규화 후 일치하면 가입 성공 |
 | X3 | 관리자 본인 가입 | admin이 자기 코드로 재가입 | E6 (이미 가입됨) |
 
 ---
@@ -166,7 +170,7 @@ type Mutation {
 
 | # | 케이스 | 기대 결과 |
 |---|--------|-----------|
-| E1 | 미가입 이메일 | `NOT_FOUND: 가입되지 않은 계정입니다. 초대 코드로 가입해주세요.` |
+| E1 | 미가입 이메일 | `NOT_FOUND: 가입되지 않은 계정입니다. 가입 코드와 회사 이메일로 가입해주세요.` |
 | E2 | 만료된 소셜 토큰 | `UNAUTHORIZED` |
 
 ---
@@ -207,11 +211,11 @@ type Mutation {
 
 ---
 
-## 기능: 초대 코드 발급 (`generateInviteCode`) — 관리자 전용
+## 기능: 가입 코드 발급 (`generateInviteCode`) — 운영자 전용
 
 ### 설명
 
-회사 관리자가 6자리 초대 코드 발급. 코드는 회사별 고유.
+도메인 운영자가 6자리 가입 코드를 발급한다. 코드는 회사별 고유이며, 가입 시 회사 이메일 도메인 검증과 함께 사용된다.
 
 ### 정상 케이스
 
@@ -224,9 +228,9 @@ type Mutation {
 
 | # | 케이스 | 기대 결과 |
 |---|--------|-----------|
-| E1 | 관리자 아님 | `FORBIDDEN: 관리자 권한이 필요합니다` |
+| E1 | 운영자 아님 | `FORBIDDEN: 운영자 권한이 필요합니다` |
 | E2 | maxUses 과다 | maxUses=9999 | `BAD_REQUEST: 최대 100명까지 설정 가능합니다` |
-| E3 | 활성 코드 과다 | 이미 10개 활성 코드 존재 | `BAD_REQUEST: 활성 초대 코드는 10개까지 가능합니다` |
+| E3 | 활성 코드 과다 | 이미 10개 활성 코드 존재 | `BAD_REQUEST: 활성 가입 코드는 10개까지 가능합니다` |
 
 ### 엣지 케이스
 
@@ -236,7 +240,7 @@ type Mutation {
 
 ---
 
-## 기능: 초대 코드 비활성화 (`deactivateInviteCode`) — 관리자 전용
+## 기능: 가입 코드 비활성화 (`deactivateInviteCode`) — 운영자 전용
 
 ### 정상 케이스
 
