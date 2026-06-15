@@ -62,7 +62,7 @@ flowchart TB
 |---|---|
 | API 계약 | 클라이언트가 사용하는 단일 GraphQL schema 제공 |
 | 인증 컨텍스트 | JWT 검증 후 `viewer`, `companyId`, `role`, `requestId`를 resolver context에 주입 |
-| 회사 도메인 격리 | 모든 resolver에 `companyId` 스코프 강제. 가입 시 `Company.domain`과 회사 이메일/OAuth 이메일 도메인을 검증 |
+| 회사 도메인 격리 | 모든 resolver에 `companyId` 스코프 강제. 가입 시 `Company.domain`과 회사 이메일 도메인 및 이메일 인증코드를 검증 |
 | 데이터 조합 | 한 화면에 필요한 Auth/Company/Matching/Payment 데이터를 조합 |
 | N+1 방지 | DataLoader, batch endpoint, resolver depth/complexity 제한 |
 | 에러 표준화 | 내부 서비스 에러를 GraphQL `extensions.code`로 변환 |
@@ -84,7 +84,7 @@ flowchart TB
 | 서비스 | Bounded Context | 주요 책임 | 소유 데이터 | 공개 계약 |
 |---|---|---|---|---|
 | GraphQL Gateway | API Composition | GraphQL schema, auth context, company scope, resolver orchestration | 없음 | `POST /graphql` |
-| Auth Service | Identity & Access | 소셜 로그인, JWT, 세션, 권한 판단 | users, sessions, oauth_accounts | `AuthCommand`, `AuthQuery` |
+| Auth Service | Identity & Access | 회사 이메일 인증코드, 비밀번호 해시, JWT, 세션, 권한 판단 | users, sessions, email_verification_challenges | `AuthCommand`, `AuthQuery` |
 | Company Service | Tenant & Admin | 회사, 가입 코드, 회사 이메일 도메인 검증, 구성원 목록, 후속 운영 통계 | companies, invite_codes, member_snapshots | `CompanyCommand`, `CompanyQuery`, events |
 | Matching Service | Ride Matching | 카풀 등록/검색/요청/수락, 회사 도메인 내 매칭 | rides, ride_requests, vehicles, reviews | `MatchingCommand`, `MatchingQuery`, events |
 | Chat Service | Conversation | 채팅방, 메시지 이력, 읽음 상태 | chat_rooms, messages, read_receipts | `ChatQuery`, WebSocket events |
