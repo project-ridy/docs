@@ -416,6 +416,45 @@ type EsgReport {
   participantCount: Int!
 }
 
+type CarbonBadge {
+  id: ID!
+  label: String!
+  description: String!
+  achievedAt: DateTime
+}
+
+type CarbonImpact {
+  period: String!
+  totalRides: Int!
+  totalDistanceKm: Float!
+  co2SavedKg: Float!
+  treeEquivalent: Float!
+  level: String!
+  badges: [CarbonBadge!]!
+}
+
+type CarbonHistoryPoint {
+  period: String!
+  totalRides: Int!
+  totalDistanceKm: Float!
+  co2SavedKg: Float!
+}
+
+type CarbonRideSaving {
+  rideId: ID!
+  completedAt: DateTime!
+  departureAddr: String
+  arrivalAddr: String
+  distanceKm: Float!
+  co2SavedKg: Float!
+}
+
+type CarbonHistory {
+  monthly: [CarbonHistoryPoint!]!
+  rides: [CarbonRideSaving!]!
+  pageInfo: PageInfo!
+}
+
 input CalculateFareInput {
   departure: LatLngInput!
   arrival: LatLngInput!
@@ -427,6 +466,8 @@ extend type Query {
   mySettlements(pagination: PaginationInput): [Settlement!]! @auth @companyScope
   companyUsageStat(period: String!): UsageStat! @auth @adminOnly @companyScope
   companyEsgReport(period: String!): EsgReport! @auth @adminOnly @companyScope
+  myCarbonImpact(period: String): CarbonImpact! @auth @companyScope
+  carbonHistory(period: String!, pagination: PaginationInput): CarbonHistory! @auth @companyScope
 }
 
 extend type Mutation {
