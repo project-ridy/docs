@@ -1,5 +1,7 @@
 # BE #2: Prisma 스키마 및 마이그레이션 구현 계획서
 
+> **docs#44 이후 상태:** 이 계획서는 기존 “기업 단위 폐쇄형/초대 코드” 표현을 포함한 과거 계획서입니다. 구현 전 최신 SSoT인 `docs/architecture/DATABASE.md` 기준으로 `Company.domain` 필수, 가입 코드 + 회사 이메일 도메인 검증, `Plan`의 후속 확장 예약 의미를 반영한 새 계획서와 Case ID 레지스트리로 재계획해야 합니다. 구식 계획 그대로 구현하면 `BLOCKED`입니다.
+
 > **For Hermes:** Use subagent-driven-development skill to implement this plan task-by-task.
 
 **Goal:** DATABASE.md 기반으로 Prisma 7 스키마 11개 모델 + 6개 ENUM을 작성하고, 마이그레이션 + 시드 데이터까지 완성
