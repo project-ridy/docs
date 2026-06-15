@@ -59,3 +59,166 @@ S10 정산 현황
 - **빈 상태**: 등록된 운행 없음 → "카풀을 등록해보세요"
 - **모집 중**: OPEN 상태 카풀 카드
 - **요청 대기**: 새 탑승 요청 배지
+
+---
+
+## 공통 반응형 브레이크포인트
+
+| 구간 | 너비 | 레이아웃 기준 | 내비게이션 | 주요 규칙 |
+|---|---:|---|---|---|
+| Mobile | 0~639px | 단일 컬럼, 최대 폭 100% | 하단 탭 바 | 터치 타깃 최소 44px, 페이지 패딩 16px |
+| Tablet | 640~1023px | 단일 컬럼 + 보조 카드 2열 가능 | 하단 탭 또는 상단 보조 메뉴 | 페이지 패딩 24px, 카드 그리드 2열 허용 |
+| Desktop | 1024px 이상 | 중앙 컨테이너 + 사이드 패널 | 상단/좌측 내비게이션 | 콘텐츠 최대 폭 1120px, 주요 리스트/상세 2열 |
+
+### 공통 상태 규칙
+
+- **Loading**: 스켈레톤 UI를 우선 사용합니다. 전체 화면 스피너는 초기 앱 부팅(S01)에만 사용합니다.
+- **Empty**: 다음 행동을 유도하는 단일 Primary CTA를 포함합니다.
+- **Error**: 원인 메시지, 재시도 버튼, 이전 화면 이동 수단을 제공합니다.
+- **Unauthorized**: 로그인 화면(S02)으로 이동하되, 초대 코드가 필요한 플로우에서는 입력값을 유지합니다.
+- **Offline**: 네트워크 오류 배너를 상단에 고정하고 읽기 가능한 캐시 데이터는 유지합니다.
+
+---
+
+## 화면별 상세 UI 스펙
+
+### S00 랜딩 페이지 (`/landing`)
+
+| 영역 | 구성 요소 | 상태/동작 |
+|---|---|---|
+| 헤더 | Ridy 로고, 서비스 보기 anchor, 시작하기 CTA | Desktop은 sticky header, Mobile은 로고 + 시작하기만 노출 |
+| 히어로 | 슬로건, 보조 설명, 초대 코드 CTA, 서비스 보기 CTA | Primary CTA는 `/login`으로 이동, 보조 CTA는 기능 섹션으로 스크롤 |
+| 지표 | 평점, 운행 횟수, CO₂ 절감량 | 데이터 미연동 시 문서화된 예시 값 사용 |
+| 기능 | 카풀 매칭, 자동 정산, 친환경 임팩트 카드 | Mobile 1열, Tablet 3열, Desktop 3열 |
+| 이용 방법 | 가입 → 매칭 → 탑승 3단계 | 단계 번호와 아이콘 표시 |
+| 푸터 | 서비스, 보안, 문의 링크 | 외부 링크는 새 탭 |
+
+### S01 스플래시 (`/` 초기 진입)
+
+| 영역 | 구성 요소 | 상태/동작 |
+|---|---|---|
+| 브랜드 | 로고, 서비스 슬로건 | 1초 이상 표시하지 않습니다 |
+| 로딩 | 앱 초기화 indicator | 세션 확인 중 표시 |
+| 라우팅 | 인증 상태 분기 | 인증됨: S04/S05, 미인증: S02 |
+
+상태: `loading`, `authenticated`, `unauthenticated`, `error`.
+
+### S02 로그인 (`/login`)
+
+| 영역 | 구성 요소 | 상태/동작 |
+|---|---|---|
+| 초대 코드 | 6자리 입력 필드, 검증 메시지 | 대문자 자동 변환, 잘못된 코드는 inline error |
+| 소셜 로그인 | 카카오, 구글 버튼 | 초대 코드 검증 전 disabled |
+| 안내 | “초대 코드로만 가입 가능” 설명 | 기업 폐쇄형 서비스 원칙 명시 |
+
+상태: `empty`, `validatingInviteCode`, `invalidInviteCode`, `socialLoginPending`, `loginFailed`.
+
+### S03 프로필 설정 (`/profile/setup`)
+
+| 영역 | 구성 요소 | 상태/동작 |
+|---|---|---|
+| 기본 정보 | 프로필 사진, 이름, 사번, 연락처 | 이름 필수, 사번/연락처는 기업 정책에 따라 optional |
+| 역할 선택 | 차주로 시작 토글 | 활성화 시 차량 정보 영역 표시 |
+| 차량 정보 | 모델, 색상, 번호판, 좌석 수 | 차주 토글 활성 시 필수 |
+| 완료 CTA | 시작하기 | 유효성 통과 전 disabled |
+
+상태: `newUser`, `driverEnabled`, `validationError`, `submitting`, `submitFailed`.
+
+### S04 홈 — 탑승자 (`/`)
+
+| 영역 | 구성 요소 | 상태/동작 |
+|---|---|---|
+| 상단 바 | 로고, 알림, 프로필 | 알림 배지는 unread 수 표시 |
+| 검색 폼 | 출발지, 도착지, 시간, 매칭 찾기 | 필수값 누락 시 field-level error |
+| 정기 카풀 | 정기 카풀 카드 목록 | Empty 시 “첫 카풀을 찾아보세요” CTA |
+| 추천 | 같은 기업 인기 경로 | 데이터 없으면 숨김 |
+| 하단 탭 | 홈, 검색, 채팅, 프로필 | Mobile 고정, Desktop은 사이드 내비로 전환 |
+
+상태: `emptyRecurring`, `hasRecurring`, `searchReady`, `searchLoading`, `searchError`, `notificationReceived`.
+
+### S05 홈 — 차주 (`/driver`)
+
+| 영역 | 구성 요소 | 상태/동작 |
+|---|---|---|
+| 운행 등록 | 출발/도착/시간/좌석/요금 입력 | 등록 성공 시 OPEN 카드 생성 |
+| 내 운행 | OPEN/MATCHED/IN_PROGRESS 카드 | 상태별 badge 색상 사용 |
+| 요청 관리 | 탑승 요청 리스트, 수락/거절 버튼 | 수락 시 좌석 수 감소, 거절 시 요청 상태 갱신 |
+| 빈 상태 | 운행 등록 유도 CTA | 등록 폼으로 focus 이동 |
+
+상태: `noRide`, `openRide`, `requestPending`, `matched`, `inProgress`, `cancelled`, `createFailed`.
+
+### S06 매칭 검색 결과 (`/matchings`)
+
+| 영역 | 구성 요소 | 상태/동작 |
+|---|---|---|
+| 검색 요약 | 출발지→도착지, 날짜/시간 | 수정 CTA 제공 |
+| 필터 | 시간대, 잔여 좌석, 요금 | Mobile은 bottom sheet, Desktop은 좌측 패널 |
+| 결과 리스트 | 매칭 카드 | 카드 클릭 시 S07 이동, CTA는 탑승 요청 |
+| 빈 상태 | 조건 완화 안내 | 필터 초기화 버튼 제공 |
+
+상태: `loading`, `hasResults`, `emptyResults`, `requesting`, `requestSuccess`, `requestFailed`.
+
+### S07 매칭 상세 (`/matchings/:id`)
+
+| 영역 | 구성 요소 | 상태/동작 |
+|---|---|---|
+| 차주 프로필 | 이름, 팀/부서, 평점, 운행 횟수 | 같은 기업 구성원 정보만 표시 |
+| 경로 상세 | 출발/도착 주소, 예상 시간, 지도 placeholder | 지도 미연동 시 주소 중심 레이아웃 유지 |
+| 운행 조건 | 요금, 좌석, 선호 조건 | 흡연/반려동물/짐 정보 badge |
+| 요청 CTA | 탑승 요청, 메시지 입력 optional | 이미 요청한 경우 상태 badge 표시 |
+
+상태: `loading`, `available`, `alreadyRequested`, `full`, `cancelled`, `requestFailed`.
+
+### S08 채팅 목록 (`/chat`)
+
+| 영역 | 구성 요소 | 상태/동작 |
+|---|---|---|
+| 검색/필터 | 상대 이름/경로 검색 | Mobile은 상단 search input |
+| 채팅방 리스트 | 경로, 상대, 마지막 메시지, unread badge | 최신 메시지순 정렬 |
+| 빈 상태 | “아직 채팅이 없습니다” | 매칭 찾기 CTA 제공 |
+
+상태: `loading`, `hasRooms`, `emptyRooms`, `offline`, `loadFailed`.
+
+### S09 채팅방 (`/chat/:id`)
+
+| 영역 | 구성 요소 | 상태/동작 |
+|---|---|---|
+| 상단 바 | 뒤로가기, 경로, 상대 프로필 | Desktop은 우측 ride summary 패널 표시 |
+| 메시지 리스트 | 상대/내 메시지 bubble, system message | 날짜 구분선 표시 |
+| 입력 | 메시지 입력, 첨부, 전송 | 빈 입력 전송 disabled |
+| 운행 정보 | 픽업 위치/시간 요약 | Mobile은 collapsible banner |
+
+상태: `connecting`, `connected`, `sending`, `sendFailed`, `offline`, `roomClosed`.
+
+### S10 정산 현황 (`/payments`)
+
+| 영역 | 구성 요소 | 상태/동작 |
+|---|---|---|
+| 요약 카드 | 이번 달 결제/수령/대기 금액 | 역할별로 탑승자/차주 문구 조정 |
+| 정산 리스트 | 날짜, 경로, 금액, 상태 | 상태 badge: PENDING/COMPLETED/FAILED/REFUNDED |
+| 필터 | 월, 상태 | Desktop은 inline, Mobile은 sheet |
+| 빈 상태 | 정산 이력 없음 | 홈 이동 CTA |
+
+상태: `loading`, `hasSettlements`, `empty`, `filterEmpty`, `loadFailed`.
+
+### S11 마이페이지 (`/profile`)
+
+| 영역 | 구성 요소 | 상태/동작 |
+|---|---|---|
+| 프로필 요약 | 사진, 이름, 기업, 역할, 평점 | 역할 변경 진입점 제공 |
+| 차량 정보 | 등록 차량, 수정/삭제 | 차량 없으면 등록 CTA |
+| 계정 설정 | 알림, 결제수단, 로그아웃 | 위험 동작은 confirm dialog |
+| 기업 정보 | 회사명, 사번, 초대 코드 정책 안내 | 관리자면 대시보드 진입 CTA |
+
+상태: `loading`, `profileReady`, `noVehicle`, `editing`, `saveFailed`, `logoutConfirm`.
+
+### S12 평점/리뷰 (`/reviews/:matchingId`)
+
+| 영역 | 구성 요소 | 상태/동작 |
+|---|---|---|
+| 운행 요약 | 경로, 날짜, 상대 사용자 | 완료된 운행만 접근 가능 |
+| 별점 입력 | 1~5 rating control | 미선택 시 제출 disabled |
+| 코멘트 | optional textarea | 최대 길이 안내 |
+| 제출 CTA | 리뷰 제출 | 중복 제출 방지 |
+
+상태: `ready`, `ratingMissing`, `submitting`, `submitted`, `alreadyReviewed`, `submitFailed`.
