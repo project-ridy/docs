@@ -11,7 +11,7 @@ Ridy의 외부 API 진입점은 **GraphQL Gateway**로 둔다.
 - 실시간 채팅: WebSocket Gateway 별도 운영
 - 서비스별 데이터 저장소는 논리적으로 분리하고, 다른 서비스 DB를 직접 조회하지 않는다
 
-이 구조가 맞는 이유는 Ridy 클라이언트가 사원 앱과 관리자 대시보드로 나뉘고, 한 화면에서 인증/회사/매칭/정산 데이터를 조합해야 하기 때문이다. GraphQL은 **클라이언트용 API 조합 계층**에 적합하고, 내부 서비스 간 경계에는 명시적인 command/event 계약이 더 적합하다.
+이 구조가 맞는 이유는 Ridy 클라이언트가 사원 앱과 도메인 운영 화면으로 나뉘고, 한 화면에서 인증/회사/매칭/정산 데이터를 조합해야 하기 때문이다. GraphQL은 **클라이언트용 API 조합 계층**에 적합하고, 내부 서비스 간 경계에는 명시적인 command/event 계약이 더 적합하다.
 
 ---
 
@@ -21,7 +21,7 @@ Ridy의 외부 API 진입점은 **GraphQL Gateway**로 둔다.
 flowchart TB
   subgraph Client[Clients]
     Employee[사원 앱 / Next.js]
-    Admin[관리자 대시보드 / Next.js]
+    Admin[도메인 운영 화면 / Next.js]
   end
 
   Employee -->|HTTPS POST /graphql| GQL[GraphQL Gateway]
@@ -62,7 +62,7 @@ flowchart TB
 |---|---|
 | API 계약 | 클라이언트가 사용하는 단일 GraphQL schema 제공 |
 | 인증 컨텍스트 | JWT 검증 후 `viewer`, `companyId`, `role`, `requestId`를 resolver context에 주입 |
-| 회사 격리 | 모든 resolver에 `companyId` 스코프 강제 |
+| 회사 도메인 격리 | 모든 resolver에 `companyId` 스코프 강제. 가입 시 `Company.domain`과 회사 이메일/OAuth 이메일 도메인을 검증 |
 | 데이터 조합 | 한 화면에 필요한 Auth/Company/Matching/Payment 데이터를 조합 |
 | N+1 방지 | DataLoader, batch endpoint, resolver depth/complexity 제한 |
 | 에러 표준화 | 내부 서비스 에러를 GraphQL `extensions.code`로 변환 |
@@ -85,8 +85,8 @@ flowchart TB
 |---|---|---|---|---|
 | GraphQL Gateway | API Composition | GraphQL schema, auth context, company scope, resolver orchestration | 없음 | `POST /graphql` |
 | Auth Service | Identity & Access | 소셜 로그인, JWT, 세션, 권한 판단 | users, sessions, oauth_accounts | `AuthCommand`, `AuthQuery` |
-| Company Service | Tenant & Admin | 회사, 초대 코드, 사원 목록, 관리자 통계 | companies, invite_codes, member_snapshots | `CompanyCommand`, `CompanyQuery`, events |
-| Matching Service | Ride Matching | 카풀 등록/검색/요청/수락, 회사 내 매칭 | rides, ride_requests, vehicles, reviews | `MatchingCommand`, `MatchingQuery`, events |
+| Company Service | Tenant & Admin | 회사, 가입 코드, 회사 이메일 도메인 검증, 구성원 목록, 후속 운영 통계 | companies, invite_codes, member_snapshots | `CompanyCommand`, `CompanyQuery`, events |
+| Matching Service | Ride Matching | 카풀 등록/검색/요청/수락, 회사 도메인 내 매칭 | rides, ride_requests, vehicles, reviews | `MatchingCommand`, `MatchingQuery`, events |
 | Chat Service | Conversation | 채팅방, 메시지 이력, 읽음 상태 | chat_rooms, messages, read_receipts | `ChatQuery`, WebSocket events |
 | Payment Service | Settlement & Billing | 요금 계산, 정산, 토스페이먼츠 연동 | settlements, payments, payment_methods | `PaymentCommand`, `PaymentQuery`, events |
 | Notification Worker | Notification | 푸시/이메일/SMS 발송 | notification_logs | event consumer |
@@ -103,7 +103,7 @@ flowchart TB
 | 호출 | 방식 | 기준 |
 |---|---|---|
 | Gateway → Auth | gRPC 또는 내부 HTTP | 토큰 검증, viewer 조회 |
-| Gateway → Company | gRPC 또는 내부 HTTP | 회사/초대코드/관리자 데이터 조회 |
+| Gateway → Company | gRPC 또는 내부 HTTP | 회사/가입 코드/도메인 운영 데이터 조회 |
 | Gateway → Matching | gRPC 또는 내부 HTTP | 라이드 조회, 매칭 요청 생성 |
 | Gateway → Payment | gRPC 또는 내부 HTTP | 요금 미리 계산, 정산 조회 |
 | Gateway → Chat | gRPC 또는 내부 HTTP | 채팅 이력 조회 |
@@ -115,7 +115,7 @@ flowchart TB
 | 이벤트 | 발행 서비스 | 구독 서비스 | 용도 |
 |---|---|---|---|
 | `UserJoinedCompany` | Auth | Company, Notification, Analytics | 사원 수 갱신, 가입 알림, 통계 |
-| `InviteCodeIssued` | Company | Notification | 초대 코드 공유 알림 |
+| `InviteCodeIssued` | Company | Notification | 가입 코드 공유 알림 |
 | `RideCreated` | Matching | Notification, Analytics | 신규 카풀 알림, 통계 |
 | `RideRequested` | Matching | Notification | 운전자에게 요청 알림 |
 | `RideMatched` | Matching | Chat, Payment, Notification, Analytics | 채팅방 생성, 예상 정산 생성, 알림, ESG 집계 |
@@ -143,7 +143,7 @@ flowchart TB
 | 데이터 | 소유 서비스 | 다른 서비스 접근 방식 |
 |---|---|---|
 | 사용자 인증/세션 | Auth | Auth query 또는 JWT claim |
-| 회사/초대 코드 | Company | Company query, `UserJoinedCompany` 이벤트 |
+| 회사/가입 코드/도메인 | Company | Company query, `UserJoinedCompany` 이벤트 |
 | 라이드/매칭 요청 | Matching | Matching query, ride events |
 | 채팅 메시지 | Chat | Chat query, WebSocket event |
 | 결제/정산 | Payment | Payment query, payment events |

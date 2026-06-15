@@ -1,7 +1,7 @@
-# Ridy — 데이터베이스 스키마 (기업 단위 폐쇄형 카풀 서비스)
+# Ridy — 데이터베이스 스키마 (회사 이메일 도메인 기반 폐쇄형 카풀 서비스)
 
-> Ridy는 기업 단위 폐쇄형 카풀 서비스입니다. 모든 유저는 반드시 소속 기업(Company)이 있어야 하며,
-> 카풀 매칭은 **같은 기업(company_id)에 소속된 구성원 간에만** 이루어집니다.
+> Ridy는 회사 이메일 도메인 기반 폐쇄형 카풀 서비스입니다. 모든 유저는 반드시 가입 코드와 회사 이메일 검증을 거쳐 소속 회사(Company)에 매핑되어야 하며,
+> 카풀 매칭은 **같은 회사 이메일 도메인(company_id/domain)에 소속된 구성원 간에만** 이루어집니다.
 
 ---
 
@@ -72,7 +72,7 @@
                          │ created_at       │                            │
                          └──────────────────┘                            │
                                                                         │
-             같은 company_id 끼리만 매칭 ◀────────────────────────────────┘
+             같은 company_id/domain 끼리만 매칭 ◀──────────────────────────┘
 ```
 
 ---
@@ -81,16 +81,16 @@
 
 ```prisma
 // ============================================================
-// 기업 (Company) — 폐쇄형 카풀의 최상위 격리 단위
+// 회사 (Company) — 폐쇄형 카풀의 최상위 격리 단위
 // ============================================================
 model Company {
   id          String   @id @default(uuid())
-  name        String   @db.VarChar(100)                    // 기업명
-  inviteCode  String   @unique @map("invite_code") @db.VarChar(20) // 기업 고유 초대 코드
-  domain      String?  @db.VarChar(100)                    // 이메일 도메인 (검증용, 예: "acme.co.kr")
-  adminId     String   @unique @map("admin_id")             // 최초 관리자 user.id
+  name        String   @db.VarChar(100)                    // 회사명
+  inviteCode  String   @unique @map("invite_code") @db.VarChar(20) // 회사 고유 가입 코드
+  domain      String   @db.VarChar(100)                    // 회사 이메일 도메인 (검증용, 예: "acme.co.kr")
+  adminId     String   @unique @map("admin_id")             // 최초 도메인 운영자 user.id
   maxMembers  Int      @default(50) @map("max_members")    // 최대 구성원 수
-  plan        Plan     @default(FREE)                      // 요금제
+  plan        Plan     @default(FREE)                      // 후속 B2B 확장 예약 필드. MVP 수수료/기능 분기에는 사용하지 않음
 
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt      @map("updated_at")
@@ -107,13 +107,14 @@ model Company {
 }
 
 enum Plan {
+  // 후속 B2B 확장 예약. MVP에서는 FREE/PRO/ENTERPRISE 분기를 구현하지 않는다.
   FREE
   PRO
   ENTERPRISE
 }
 
 // ============================================================
-// 초대 코드 (InviteCode) — 기업 관리자가 생성, 신규 구성원 가입용
+// 가입 코드 (InviteCode) — 도메인 운영자가 생성, 신규 구성원 가입용
 // ============================================================
 model InviteCode {
   id          String    @id @default(uuid())
@@ -136,11 +137,11 @@ model InviteCode {
 }
 
 // ============================================================
-// 사용자 (User) — 반드시 하나의 기업에 소속
+// 사용자 (User) — 반드시 하나의 회사/이메일 도메인에 소속
 // ============================================================
 model User {
   id            String   @id @default(uuid())
-  companyId     String   @map("company_id")                 // 필수: 소속 기업
+  companyId     String   @map("company_id")                 // 필수: 소속 회사/도메인
   employeeId    String?  @map("employee_id") @db.VarChar(50) // 선택: 사번
   email         String   @unique @db.VarChar(255)
   name          String   @db.VarChar(100)
@@ -168,7 +169,7 @@ model User {
   createdInviteCodes InviteCode[] @relation("InviteCodeCreator")
   adminOf       Company?       @relation("CompanyAdmin", fields: [id], references: [adminId])
 
-  @@unique([companyId, employeeId]) // 같은 기업 내 사번 중복 방지
+  @@unique([companyId, employeeId]) // 같은 회사 내 사번 중복 방지
   @@index([companyId])
   @@index([provider, providerId])
   @@index([companyId, role])
@@ -184,7 +185,7 @@ enum Role {
   PASSENGER
   DRIVER
   BOTH
-  ADMIN   // 기업 관리자
+  ADMIN   // 도메인 운영자 / 후속 기업 관리자
 }
 
 // ============================================================
@@ -415,50 +416,50 @@ enum MessageType {
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
-| id | UUID | PK | 기업 고유 ID |
-| name | VARCHAR(100) | NOT NULL | 기업명 |
-| invite_code | VARCHAR(20) | UNIQUE | 기업 고유 초대 코드 (가입 시 사용) |
-| domain | VARCHAR(100) | NULL, INDEX | 이메일 도메인 (예: `acme.co.kr`). 도메인 기반 자동 소속 검증용 |
-| admin_id | UUID | FK → users, UNIQUE, NOT NULL | 기업 관리자 (최초 생성자). 한 유저는 한 회사의 대표 관리자만 될 수 있음 |
-| max_members | INT | DEFAULT 50 | 최대 구성원 수 (요금제별 상이) |
-| plan | ENUM | DEFAULT FREE | FREE / PRO / ENTERPRISE |
+| id | UUID | PK | 회사 고유 ID |
+| name | VARCHAR(100) | NOT NULL | 회사명 |
+| invite_code | VARCHAR(20) | UNIQUE | 회사 고유 가입 코드 (가입 시 사용) |
+| domain | VARCHAR(100) | NOT NULL, INDEX | 회사 이메일 도메인 (예: `acme.co.kr`). 도메인 기반 자동 소속 검증용 |
+| admin_id | UUID | FK → users, UNIQUE, NOT NULL | 도메인 운영자 (최초 생성자). 한 유저는 한 회사의 대표 운영자만 될 수 있음 |
+| max_members | INT | DEFAULT 50 | 최대 구성원 수 |
+| plan | ENUM | DEFAULT FREE | 후속 B2B 확장 예약 필드. MVP 수수료/기능 분기에 사용하지 않음 |
 | created_at | TIMESTAMP | NOT NULL, DEFAULT now() | 생성일 |
 | updated_at | TIMESTAMP | NOT NULL, auto-update | 수정일 |
 
-**plan별 기본 max_members**:
+**후속 plan별 기본 max_members 후보** — 현재 구현 기준 아님:
 | plan | max_members | 비고 |
 |---|---|---|
-| FREE | 50 | 무료 |
-| PRO | 200 | 월 구독 |
-| ENTERPRISE | 무제한 | 커스텀 계약 |
+| FREE | 미정 | 후속 파일럿 후보 |
+| PRO | 미정 | 후속 월 구독 후보, 구현 전 BLOCKED |
+| ENTERPRISE | 미정 | 후속 커스텀 계약 후보, 구현 전 BLOCKED |
 
 ### invite_codes
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
-| id | UUID | PK | 초대 코드 ID |
-| company_id | UUID | FK → companies, NOT NULL | 소속 기업 |
+| id | UUID | PK | 가입 코드 ID |
+| company_id | UUID | FK → companies, NOT NULL | 소속 회사/도메인 |
 | code | VARCHAR(6) | NOT NULL | 6자리 영숫자 코드 |
-| created_by | UUID | FK → users | 코드 생성자 (관리자) |
+| created_by | UUID | FK → users | 코드 생성자 (도메인 운영자) |
 | max_uses | INT | DEFAULT 10 | 최대 사용 가능 횟수 |
 | current_uses | INT | DEFAULT 0 | 현재까지 사용 횟수 |
 | expires_at | TIMESTAMP | | 만료일 (NULL = 무제한) |
 | is_active | BOOLEAN | DEFAULT true | 활성 여부 |
 
-**제약**: `(company_id, code)` 복합 유니크 — 같은 기업 내 코드 중복 방지
+**제약**: `(company_id, code)` 복합 유니크 — 같은 회사 내 코드 중복 방지
 
 **인덱스**:
-- `(company_id, code)` UNIQUE: 초대 코드 검증
-- `(company_id, is_active, expires_at)`: 활성 초대 코드 목록/만료 검증
-- `(created_by)`: 관리자별 발급 코드 조회
+- `(company_id, code)` UNIQUE: 가입 코드 검증
+- `(company_id, is_active, expires_at)`: 활성 가입 코드 목록/만료 검증
+- `(created_by)`: 운영자별 발급 코드 조회
 
 ### users
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
 | id | UUID | PK | 유저 고유 ID |
-| **company_id** | **UUID** | **FK → companies, NOT NULL** | **소속 기업 (필수)** |
-| **employee_id** | **VARCHAR(50)** | **선택** | **사번 (같은 기업 내 유니크)** |
+| **company_id** | **UUID** | **FK → companies, NOT NULL** | **소속 회사/도메인 (필수)** |
+| **employee_id** | **VARCHAR(50)** | **선택** | **사번 (같은 회사 내 유니크)** |
 | email | VARCHAR(255) | UNIQUE | 이메일 |
 | name | VARCHAR(100) | NOT NULL | 이름 |
 | phone | VARCHAR(20) | | 전화번호 |
@@ -472,11 +473,11 @@ enum MessageType {
 | created_at | TIMESTAMP | NOT NULL, DEFAULT now() | 생성일 |
 | updated_at | TIMESTAMP | NOT NULL, auto-update | 수정일 |
 
-**제약**: `(company_id, employee_id)` 복합 유니크 — 같은 기업 내 사번 중복 방지
+**제약**: `(company_id, employee_id)` 복합 유니크 — 같은 회사 내 사번 중복 방지
 
 **인덱스**:
-- `(company_id)`: 기업 구성원 목록
-- `(company_id, role)`: 기업 관리자/차주/탑승자 필터
+- `(company_id)`: 회사 도메인 구성원 목록
+- `(company_id, role)`: 도메인 운영자/차주/탑승자 필터
 - `(provider, provider_id)`: 소셜 로그인 계정 조회
 
 ### rides
@@ -484,7 +485,7 @@ enum MessageType {
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
 | id | UUID | PK | 운행 ID |
-| **company_id** | **UUID** | **FK → companies, NOT NULL** | **소속 기업 (격리 키)** |
+| **company_id** | **UUID** | **FK → companies, NOT NULL** | **소속 회사/도메인 (격리 키)** |
 | driver_id | UUID | FK → users | 차주 |
 | departure_lat | DECIMAL(10,7) | NOT NULL | 출발지 위도 |
 | departure_lng | DECIMAL(10,7) | NOT NULL | 출발지 경도 |
@@ -553,11 +554,11 @@ enum MessageType {
 | id | UUID | PK | 정산 ID |
 | ride_id | UUID | FK → rides | 운행 |
 | passenger_id | UUID | FK → users | 승객 |
-| company_id | UUID | FK → companies, NULL | 기업별 정산 조회용 비정규화 키. 신규 데이터는 ride.company_id를 복사 저장 |
+| company_id | UUID | FK → companies, NULL | 회사 도메인별 정산 조회용 비정규화 키. 신규 데이터는 ride.company_id를 복사 저장 |
 | amount | INT | | 승객 결제 금액 |
 | driver_amount | INT | | 차주 수령 금액 |
 | platform_fee | INT | | 플랫폼 수수료 |
-| company_fee | INT | DEFAULT 0 | 기업 부담 금액 |
+| company_fee | INT | DEFAULT 0 | 회사 부담 금액. MVP에서는 0이며 후속 B2B 확장 전까지 회사 부담 정산은 BLOCKED |
 | passenger_fee | INT | DEFAULT 0 | 탑승자 부담 금액 |
 | status | ENUM | | PENDING, COMPLETED, FAILED, REFUNDED |
 | due_date | TIMESTAMP | | 정산 예정일 |
@@ -565,7 +566,7 @@ enum MessageType {
 | created_at | TIMESTAMP | NOT NULL, DEFAULT now() | 생성일 |
 
 **인덱스**:
-- `(company_id, status, created_at)`: 기업 관리자 정산 대시보드
+- `(company_id, status, created_at)`: 도메인 운영/후속 관리자 정산 대시보드
 - `(ride_id)`: 운행별 정산 조회
 - `(passenger_id, status)`: 사용자별 결제/정산 상태 조회
 
@@ -664,15 +665,15 @@ const request = await prisma.rideRequest.create({
 | 탑승 요청 | `ride.companyId === passenger.companyId` |
 | 채팅 참여 | `ride.companyId === user.companyId` |
 | 리뷰 작성 | `ride.companyId === reviewer.companyId` |
-| 정산 조회 | 관리자: 본인 기업 정산만 조회 가능 |
+| 정산 조회 | 운영자/후속 관리자: 본인 회사 도메인 정산만 조회 가능 |
 
 ---
 
-## 관리자 대시보드용 통계 뷰
+## 도메인 운영/후속 관리자 대시보드용 통계 뷰
 
-기업 관리자(role=ADMIN)는 자사 대시보드에서 아래 통계를 조회할 수 있습니다.
+도메인 운영자 또는 후속 기업 관리자(role=ADMIN)는 자사 도메인 범위에서 아래 통계를 조회할 수 있습니다.
 
-### 1. 기업 활성 사용자 통계
+### 1. 회사 도메인 활성 사용자 통계
 
 ```sql
 CREATE OR REPLACE VIEW v_company_user_stats AS
@@ -689,7 +690,7 @@ LEFT JOIN users u ON u.company_id = c.id
 GROUP BY c.id, c.name;
 ```
 
-### 2. 기업 일별 카풀 통계
+### 2. 회사 도메인 일별 카풀 통계
 
 ```sql
 CREATE OR REPLACE VIEW v_company_ride_daily AS
@@ -705,7 +706,7 @@ FROM rides
 GROUP BY company_id, DATE(departure_time);
 ```
 
-### 3. 기업 월별 정산 요약
+### 3. 회사 도메인 월별 정산 요약
 
 ```sql
 CREATE OR REPLACE VIEW v_company_settlement_monthly AS
@@ -725,7 +726,7 @@ JOIN companies c ON c.id = r.company_id
 GROUP BY c.id, c.name, DATE_TRUNC('month', s.created_at);
 ```
 
-### 4. 초대 코드 사용 현황
+### 4. 가입 코드 사용 현황
 
 ```sql
 CREATE OR REPLACE VIEW v_invite_code_usage AS
@@ -747,37 +748,37 @@ FROM invite_codes ic
 JOIN companies c ON c.id = ic.company_id;
 ```
 
-### 대시보드 API 엔드포인트 (예정)
+### 운영/후속 대시보드 API 엔드포인트 (예정)
 
 | 엔드포인트 | 설명 | 사용 뷰 |
 |---|---|---|
-| `GET /admin/stats/users` | 기업 사용자 통계 | `v_company_user_stats` |
+| `GET /admin/stats/users` | 회사 도메인 사용자 통계 | `v_company_user_stats` |
 | `GET /admin/stats/rides/daily` | 일별 카풀 통계 | `v_company_ride_daily` |
 | `GET /admin/stats/settlements/monthly` | 월별 정산 요약 | `v_company_settlement_monthly` |
-| `GET /admin/invite-codes` | 초대 코드 현황 | `v_invite_code_usage` |
+| `GET /admin/invite-codes` | 가입 코드 현황 | `v_invite_code_usage` |
 
-> **주의**: 모든 관리자 API는 요청자의 `company_id`로 자동 필터링되며, 타 기업 데이터 접근은 불가합니다.
+> **주의**: 모든 운영/관리자 API는 요청자의 `company_id`로 자동 필터링되며, 타 회사 도메인 데이터 접근은 불가합니다.
 
 ---
 
 ## 가입 플로우
 
 ```
-1. 사용자가 초대 코드 입력 (또는 이메일 도메인 자동 감지)
+1. 사용자가 가입 코드와 회사 이메일 입력
    ↓
 2. invite_codes 테이블에서 코드 검증
    - is_active = true
    - current_uses < max_uses
    - expires_at IS NULL OR expires_at > NOW()
    ↓
-3. companies.domain 과 사용자 이메일 도메인 일치 확인
+3. companies.domain 과 회사 이메일/OAuth 계정 이메일 도메인 일치 확인
    ↓
 4. users 테이블에 company_id 설정하여 생성
    - employee_id (선택) 입력
    ↓
 5. invite_codes.current_uses += 1
    ↓
-6. 가입 완료 → 같은 기업 카풀 매칭 가능
+6. 가입 완료 → 같은 회사 이메일 도메인 카풀 매칭 가능
 ```
 
 ---
@@ -789,12 +790,12 @@ JOIN companies c ON c.id = ic.company_id;
 ### 기업/가입
 
 ```sql
--- 기업 고유 초대 코드 및 도메인 검증
+-- 회사 고유 가입 코드 및 도메인 검증
 CREATE UNIQUE INDEX companies_invite_code_key ON companies(invite_code);
 CREATE UNIQUE INDEX companies_admin_id_key ON companies(admin_id);
 CREATE INDEX idx_companies_domain ON companies(domain);
 
--- 초대 코드 검증: company_id + code는 유니크, 활성 코드 목록은 company_id/is_active/expires_at 기준
+-- 가입 코드 검증: company_id + code는 유니크, 활성 코드 목록은 company_id/is_active/expires_at 기준
 CREATE UNIQUE INDEX invite_codes_company_id_code_key ON invite_codes(company_id, code);
 CREATE INDEX idx_invite_codes_created_by ON invite_codes(created_by);
 CREATE INDEX idx_invite_codes_company_active_expires ON invite_codes(company_id, is_active, expires_at);
@@ -840,7 +841,7 @@ CREATE INDEX idx_reviews_from_id ON reviews(from_id);
 ### 정산/결제/채팅
 
 ```sql
--- 기업 관리자 정산 대시보드 및 사용자별 결제/정산 이력
+-- 도메인 운영/후속 관리자 정산 대시보드 및 사용자별 결제/정산 이력
 CREATE INDEX idx_settlements_company_status_created ON settlements(company_id, status, created_at);
 CREATE INDEX idx_settlements_ride_id ON settlements(ride_id);
 CREATE INDEX idx_settlements_passenger_status ON settlements(passenger_id, status);
@@ -867,17 +868,17 @@ Prisma 7의 schema-first 사용 범위 안에서 표현되지 않거나 DB별 DD
 | `rides.available_seats` | `available_seats >= 1` | 서비스 레이어 검증 + PostgreSQL CHECK |
 | `rides.fare` | `fare IS NULL OR fare >= 0` | 서비스 레이어 검증 + PostgreSQL CHECK |
 | `invite_codes.current_uses` | `0 <= current_uses <= max_uses` | 트랜잭션 업데이트 + PostgreSQL CHECK |
-| `settlements.amount/driver_amount/platform_fee/company_fee/passenger_fee` | 모든 금액 `>= 0`, `amount = driver_amount + platform_fee + company_fee + passenger_fee` 정책은 요금제별 서비스 로직에서 검증 | 서비스 레이어 검증 + 선택적 CHECK |
+| `settlements.amount/driver_amount/platform_fee/company_fee/passenger_fee` | 모든 금액 `>= 0`, MVP에서는 `company_fee = 0`과 `passenger_fee = platform_fee`를 서비스 로직에서 검증. plan별 회사 부담 정산은 후속 B2B 스펙 확정 전까지 BLOCKED | 서비스 레이어 검증 + 선택적 CHECK |
 
 ## 마이그레이션 전략
 
-Ridy는 MVP 중에도 기업 단위 폐쇄형 모델을 유지해야 하므로, DB 변경은 **expand → backfill → validate → contract** 순서로 진행한다. 모든 마이그레이션은 `docs/architecture/DATABASE.md` 변경 후 backend Prisma schema에 반영한다.
+Ridy는 MVP 중에도 회사 이메일 도메인 기반 폐쇄형 모델을 유지해야 하므로, DB 변경은 **expand → backfill → validate → contract** 순서로 진행한다. 모든 마이그레이션은 `docs/architecture/DATABASE.md` 변경 후 backend Prisma schema에 반영한다.
 
 ### 1. 사전 검증
 
 1. 변경 전 `docs/architecture/DATABASE.md`, `docs/architecture/ARCHITECTURE.md`, `backend/prisma/schema.prisma`의 모델/컬럼/enum 이름을 대조한다.
 2. GraphQL schema/API 문서에서 새 필드가 노출되는 경우 `docs/api/` 문서를 먼저 갱신한다.
-3. 기업 격리 키(`company_id`)가 필요한 테이블은 nullable 도입 → backfill → NOT NULL 전환 순서로 진행한다.
+3. 회사 도메인 격리 키(`company_id`)가 필요한 테이블은 nullable 도입 → backfill → NOT NULL 전환 순서로 진행한다.
 
 ### 2. Expand 단계
 
