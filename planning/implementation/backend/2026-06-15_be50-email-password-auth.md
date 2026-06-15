@@ -19,7 +19,7 @@ OAuth 간편로그인을 제거하고, 회사 이메일 인증코드 + 비밀번
 ## 관련 이슈
 
 - docs: project-ridy/docs#50
-- backend 구현 이슈: 생성 필요
+- backend 구현 이슈: project-ridy/backend#47
 - backend 테스트 이슈: 생성 필요
 
 ## 관련 docs 문서

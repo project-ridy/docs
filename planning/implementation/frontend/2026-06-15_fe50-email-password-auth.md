@@ -16,7 +16,7 @@ OAuth 간편로그인 버튼을 제거하고, S02 로그인/가입 화면을 회
 ## 관련 이슈
 
 - docs: project-ridy/docs#50
-- frontend 구현 이슈: 생성 필요
+- frontend 구현 이슈: project-ridy/frontend#38
 - frontend 테스트 이슈: 생성 필요
 
 ## 관련 docs 문서
