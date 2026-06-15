@@ -13,6 +13,8 @@
    - 계획서는 반드시 대상 레포별로 `docs/planning/implementation/frontend/` 또는 `docs/planning/implementation/backend/`에 저장한다.
    - 로컬 작업 편의를 위해 `.hermes/plans/`에도 같은 내용을 둘 수 있다.
    - 구현자는 계획서의 A/E/X 케이스, 파일 경로, 검증 명령을 기준으로 작업한다.
+   - 계획서에는 반드시 **구현/테스트 Case ID 레지스트리**를 포함한다.
+   - 레지스트리는 각 Case ID별로 구현 파일/단위, 테스트 파일/테스트명, A/E/X 링크를 연결해야 한다.
 
 3. **docs가 단일 진실 공급원(SSoT)이다.**
    - API: `docs/api/`
@@ -82,6 +84,12 @@ planning/implementation/frontend/2026-06-11_fe04-login-onboarding.md
   - A: 정상 케이스
   - E: 예외 케이스
   - X: 엣지 케이스
+- 구현/테스트 Case ID 레지스트리
+  - Case ID
+  - A/E/X 케이스 링크
+  - 구현 파일/단위
+  - 테스트 파일/테스트명
+  - 완료 기준
 - 수정/생성할 파일 경로
 - TDD 순서
 - 실행할 검증 명령
@@ -96,7 +104,10 @@ planning/implementation/frontend/2026-06-11_fe04-login-onboarding.md
 - 작업 범위
 - 범위 제외
 - TDD 사이클
+- Case ID별 구현/테스트 연결표
 - 완료 조건
+
+이슈 본문에 구현 계획서 경로 또는 Case ID 연결표가 없으면 작업은 `BLOCKED` 상태로 보고하고, 구현 전에 docs/계획서를 먼저 갱신한다.
 
 ### 4. 브랜치 생성
 
@@ -117,6 +128,7 @@ test/4-auth-api-tests
 ### 5. 구현
 
 - 계획서 순서대로 진행한다.
+- 계획서의 Case ID별 구현 파일/단위를 기준으로 최소 변경한다.
 - 테스트를 먼저 작성한다.
 - 실패를 확인한 뒤 최소 구현한다.
 - codegen/generated 산출물은 사람이 직접 수정하지 않는다.
@@ -177,8 +189,15 @@ PR 본문에는 다음을 포함한다.
 - 변경 내용
 - 관련 이슈
 - 관련 계획서 경로
+- Case ID 구현/테스트 확인표
+  - 모든 기능 코드 Case ID
+  - 구현 파일/단위
+  - 테스트 파일/테스트명
+  - 상태(PASS/BLOCKED)
 - 검증 결과
 - 범위 제외 또는 후속 작업
+
+Case ID 확인표에서 구현 또는 테스트가 비어 있거나 `BLOCKED`가 남아 있으면 PR은 리뷰/머지 대상이 아니다.
 
 ### 9. 머지 및 정리
 
@@ -221,6 +240,8 @@ git push origin --delete <branch>
 
 - main 직접 커밋
 - 계획서 없이 다단계 기능 구현 시작
+- 구현/테스트 Case ID 레지스트리 없이 기능 구현 시작
+- PR에서 Case ID별 구현/테스트 확인표 누락
 - docs에 없는 스펙 임의 추가
 - 테스트 없이 기능 완료 처리
 - generated 파일 수동 수정

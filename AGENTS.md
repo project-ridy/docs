@@ -29,9 +29,13 @@
 
 ### 작업 분배 기준
 - 구현 계획서는 대상 레포별로 `planning/implementation/frontend/` 또는 `planning/implementation/backend/`에 저장한다.
+- 구현 계획서는 A/E/X Case ID와 구현/테스트 Case ID 레지스트리를 반드시 포함해야 한다.
+- Case ID 레지스트리는 Case ID, A/E/X 링크, 구현 파일/단위, 테스트 파일/테스트명, 완료 기준을 포함한다.
 - Orchestrator가 구현 계획서 리뷰 & 승인 후 Frontend Developer/Backend Developer/Designer 에이전트에 작업 할당
 - 할당 시 이슈 번호, 관련 기획서 경로, 관련 docs 문서 경로, 완료 조건을 명확히 전달
 - Frontend Developer/Backend Developer/Designer PR이 기획서 + docs 스펙과 일치하는지 검증
+- 구현 PR은 Case ID 확인표로 모든 계획서 Case ID가 구현 파일/단위 및 테스트 파일/테스트명에 연결되었음을 증명해야 한다.
+- Case ID 누락, 테스트 누락, docs에 없는 API/DB/디자인 동작 발견 시 PR을 승인하지 않고 `BLOCKED`로 되돌린다.
 - BLOCKED 이슈는 Orchestrator가 docs 업데이트 또는 agents 레포 업데이트로 해결
 
 ### 문서 작성 규칙
