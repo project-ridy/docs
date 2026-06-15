@@ -156,16 +156,27 @@ type InviteCode {
   createdAt: DateTime!
 }
 
-input JoinWithInviteCodeInput {
+type EmailVerificationChallenge {
+  id: ID!
+  companyEmail: String!
+  expiresAt: DateTime!
+  resendAvailableAt: DateTime!
+}
+
+input RequestCompanyEmailVerificationInput {
   inviteCode: String!
-  provider: String!
-  oauthToken: String!
-  employeeId: String
+  companyEmail: String!
+}
+
+input CompleteEmailPasswordSignupInput {
+  challengeId: ID!
+  verificationCode: String!
+  password: String!
 }
 
 input LoginInput {
-  provider: String!
-  oauthToken: String!
+  companyEmail: String!
+  password: String!
 }
 
 input UpdateProfileInput {
@@ -200,7 +211,8 @@ extend type Query {
 }
 
 extend type Mutation {
-  joinWithInviteCode(input: JoinWithInviteCodeInput!): AuthPayload!
+  requestCompanyEmailVerification(input: RequestCompanyEmailVerificationInput!): EmailVerificationChallenge!
+  completeEmailPasswordSignup(input: CompleteEmailPasswordSignupInput!): AuthPayload!
   login(input: LoginInput!): AuthPayload!
   refreshToken(token: String!): AuthPayload!
   updateProfile(input: UpdateProfileInput!): User! @auth

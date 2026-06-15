@@ -1,79 +1,186 @@
-# Ridy — 데이터베이스 스키마 (회사 이메일 도메인 기반 폐쇄형 카풀 서비스)
+# Ridy — 데이터베이스 스키마 (회사 이메일 인증 기반 폐쇄형 카풀 서비스)
 
-> Ridy는 회사 이메일 도메인 기반 폐쇄형 카풀 서비스입니다. 모든 유저는 반드시 가입 코드와 회사 이메일 검증을 거쳐 소속 회사(Company)에 매핑되어야 하며,
+> Ridy는 회사 이메일 도메인 기반 폐쇄형 카풀 서비스입니다. 모든 유저는 반드시 가입 코드와 회사 이메일 인증코드 검증을 거쳐 소속 회사(Company)에 매핑되어야 하며,
 > 카풀 매칭은 **같은 회사 이메일 도메인(company_id/domain)에 소속된 구성원 간에만** 이루어집니다.
 
 ---
 
 ## ERD
 
+```mermaid
+erDiagram
+  COMPANIES ||--o{ USERS : has_members
+  COMPANIES ||--o{ INVITE_CODES : issues
+  COMPANIES ||--o{ EMAIL_VERIFICATION_CHALLENGES : validates_email
+  COMPANIES ||--o{ RIDES : scopes
+  COMPANIES ||--o{ SETTLEMENTS : scopes
+
+  USERS ||--o{ VEHICLES : owns
+  USERS ||--o{ RIDES : drives
+  USERS ||--o{ RIDE_REQUESTS : requests
+  USERS ||--o{ REVIEWS : writes
+  USERS ||--o{ PAYMENT_METHODS : registers
+  USERS ||--o{ SETTLEMENTS : pays
+  USERS ||--o{ MESSAGES : sends
+  USERS ||--o{ INVITE_CODES : creates
+
+  INVITE_CODES ||--o{ EMAIL_VERIFICATION_CHALLENGES : authorizes
+  RIDES ||--o{ RIDE_REQUESTS : receives
+  RIDES ||--o{ REVIEWS : reviewed_by
+  RIDES ||--o| CHAT_ROOMS : opens
+  RIDES ||--o{ SETTLEMENTS : settled_by
+  CHAT_ROOMS ||--o{ MESSAGES : contains
+
+  COMPANIES {
+    string id PK
+    string name
+    string invite_code UK
+    string domain
+    string admin_id FK
+    int max_members
+    Plan plan
+    datetime created_at
+    datetime updated_at
+  }
+
+  INVITE_CODES {
+    string id PK
+    string company_id FK
+    string code
+    string created_by FK
+    int max_uses
+    int current_uses
+    datetime expires_at
+    boolean is_active
+  }
+
+  EMAIL_VERIFICATION_CHALLENGES {
+    string id PK
+    string company_id FK
+    string invite_code_id FK
+    string company_email
+    string code_hash
+    datetime expires_at
+    datetime used_at
+    datetime resend_available_at
+    datetime created_at
+  }
+
+  USERS {
+    string id PK
+    string company_id FK
+    string employee_id
+    string email UK
+    string name
+    string phone
+    string image_url
+    string password_hash
+    datetime email_verified_at
+    Role role
+    decimal rating
+    int ride_count
+    boolean phone_verified
+    datetime created_at
+    datetime updated_at
+  }
+
+  VEHICLES {
+    string id PK
+    string user_id FK
+    string model
+    string color
+    string plate
+    int capacity
+    datetime created_at
+  }
+
+  RIDES {
+    string id PK
+    string company_id FK
+    string driver_id FK
+    decimal departure_lat
+    decimal departure_lng
+    string departure_addr
+    decimal arrival_lat
+    decimal arrival_lng
+    string arrival_addr
+    datetime departure_time
+    int available_seats
+    int fare
+    string recurring_days
+    datetime recurring_end
+    json preferences
+    RideStatus status
+    datetime created_at
+    datetime updated_at
+  }
+
+  RIDE_REQUESTS {
+    string id PK
+    string ride_id FK
+    string passenger_id FK
+    decimal pickup_lat
+    decimal pickup_lng
+    string pickup_addr
+    string message
+    RequestStatus status
+    datetime created_at
+    datetime updated_at
+  }
+
+  CHAT_ROOMS {
+    string id PK
+    string ride_id FK
+    datetime created_at
+  }
+
+  MESSAGES {
+    string id PK
+    string room_id FK
+    string sender_id FK
+    string content
+    MessageType type
+    datetime created_at
+  }
+
+  REVIEWS {
+    string id PK
+    string ride_id FK
+    string from_id FK
+    string to_id FK
+    int rating
+    string comment
+    datetime created_at
+  }
+
+  PAYMENT_METHODS {
+    string id PK
+    string user_id FK
+    string type
+    string billing_key
+    string alias
+    boolean is_default
+    datetime created_at
+  }
+
+  SETTLEMENTS {
+    string id PK
+    string ride_id FK
+    string passenger_id FK
+    string company_id FK
+    int amount
+    int driver_amount
+    int platform_fee
+    int company_fee
+    int passenger_fee
+    SettlementStatus status
+    datetime due_date
+    datetime paid_at
+    datetime created_at
+  }
 ```
-┌──────────────────┐      ┌──────────────────┐      ┌──────────────────┐
-│    companies      │      │   invite_codes   │      │      users       │
-├──────────────────┤      ├──────────────────┤      ├──────────────────┤
-│ id (PK)          │──┐   │ id (PK)          │      │ id (PK)          │
-│ name             │  │   │ company_id (FK)   │──┐   │ company_id (FK)  │──┐
-│ invite_code      │  │   │ code             │  │   │ employee_id      │  │
-│ domain           │  │   │ created_by (FK)  │  │   │ email            │  │
-│ admin_id (FK)    │  │   │ max_uses         │  │   │ name             │  │
-│ max_members      │  │   │ current_uses     │  │   │ phone            │  │
-│ plan             │  │   │ expires_at       │  │   │ image_url        │  │
-│ created_at       │  │   │ is_active        │  │   │ provider         │  │
-│ updated_at       │  │   └──────────────────┘  │   │ provider_id      │  │
-└──────────────────┘  │                         │   │ role             │  │
-                      └─────────────────────────┘   │ rating           │  │
-                                                    │ ride_count       │  │
-┌─────────────┐                                     │ phone_verified   │  │
-│  vehicles   │                                     │ created_at       │  │
-├─────────────┤                                     │ updated_at       │  │
-│ id (PK)     │                                     └────────┬─────────┘  │
-│ user_id(FK) │──────────────────────────────────────────────┘            │
-│ model       │                                                          │
-│ color       │                                                          │
-│ plate       │                                                          │
-│ capacity    │     ┌──────────────────┐     ┌─────────────────┐         │
-│ created_at  │     │      rides       │     │  ride_requests  │         │
-└─────────────┘     ├──────────────────┤     ├─────────────────┤         │
-                    │ id (PK)          │     │ id (PK)         │         │
-┌─────────────┐     │ company_id (FK)  │──┐  │ ride_id (FK)    │         │
-│   reviews   │     │ driver_id (FK)   │  │  │ passenger_id(FK)│         │
-├─────────────┤     │ departure_lat    │  │  │ pickup_lat      │         │
-│ id (PK)     │     │ departure_lng    │  │  │ pickup_lng      │         │
-│ ride_id(FK) │     │ departure_addr   │  │  │ pickup_addr     │         │
-│ from_id(FK) │     │ arrival_lat      │  │  │ message         │         │
-│ to_id (FK)  │     │ arrival_lng      │  │  │ status          │         │
-│ rating      │     │ arrival_addr     │  │  │ created_at      │         │
-│ comment     │     │ departure_time   │  │  │ updated_at      │         │
-│ created_at  │     │ available_seats  │  │  └─────────────────┘         │
-└─────────────┘     │ fare             │  │                               │
-                    │ recurring_days   │  │  ┌─────────────────┐          │
-┌──────────────────┐│ recurring_end    │  │  │   chat_rooms    │          │
-│  payment_methods ││ preferences      │  │  ├─────────────────┤          │
-├──────────────────┤│ status           │  │  │ id (PK)         │          │
-│ id (PK)          ││ created_at       │  │  │ ride_id (FK)    │          │
-│ user_id (FK)     ││ updated_at       │  │  │ created_at      │          │
-│ type             │└──────────────────┘  │  └────────┬────────┘          │
-│ billing_key      │                      │           │                   │
-│ alias            │     ┌──────────────────┐  ┌───────▼─────────┐       │
-│ is_default       │     │   settlements    │  │   messages       │       │
-│ created_at       │     ├──────────────────┤  ├─────────────────┤       │
-└──────────────────┘     │ id (PK)          │  │ id (PK)         │       │
-                          │ ride_id (FK)     │  │ room_id (FK)    │       │
-                          │ passenger_id(FK) │  │ sender_id (FK)  │       │
-                          │ company_id (FK)  │  │ content         │       │
-                          │ amount           │  │ type            │       │
-                          │ driver_amount    │  │ created_at      │       │
-                          │ platform_fee     │  └─────────────────┘       │
-                          │ company_fee      │                            │
-                          │ passenger_fee    │                            │
-                          │ status           │                            │
-                          │ due_date         │                            │
-                          │ paid_at          │                            │
-                         │ created_at       │                            │
-                         └──────────────────┘                            │
-                                                                        │
-             같은 company_id/domain 끼리만 매칭 ◀──────────────────────────┘
-```
+
+> 매칭/요청/정산/채팅은 같은 `company_id` 경계 안에서만 허용한다. 가입 시 `Company.domain`, `InviteCode`, `EmailVerificationChallenge` 검증이 모두 성공해야 `User.company_id`가 확정된다.
 
 ---
 
@@ -99,6 +206,7 @@ model Company {
   admin       User        @relation("CompanyAdmin", fields: [adminId], references: [id])
   users       User[]
   inviteCodes InviteCode[]
+  emailVerificationChallenges EmailVerificationChallenge[]
   rides       Ride[]
   settlements Settlement[]
 
@@ -129,6 +237,7 @@ model InviteCode {
   // Relations
   company     Company   @relation(fields: [companyId], references: [id])
   creator     User      @relation("InviteCodeCreator", fields: [createdBy], references: [id])
+  emailVerificationChallenges EmailVerificationChallenge[]
 
   @@unique([companyId, code])
   @@index([createdBy])
@@ -147,8 +256,8 @@ model User {
   name          String   @db.VarChar(100)
   phone         String?  @db.VarChar(20)
   imageUrl      String?  @map("image_url") @db.Text
-  provider      Provider?
-  providerId    String?  @map("provider_id") @db.VarChar(255)
+  passwordHash  String   @map("password_hash") @db.VarChar(255) // 필수: 비밀번호 해시. 원문 저장 금지
+  emailVerifiedAt DateTime? @map("email_verified_at")            // 회사 이메일 인증 완료 시각
   role          Role     @default(PASSENGER)
   rating        Decimal  @default(0.0) @db.Decimal(2, 1)
   rideCount     Int      @default(0) @map("ride_count")
@@ -171,14 +280,32 @@ model User {
 
   @@unique([companyId, employeeId]) // 같은 회사 내 사번 중복 방지
   @@index([companyId])
-  @@index([provider, providerId])
+  @@index([companyId, emailVerifiedAt])
   @@index([companyId, role])
   @@map("users")
 }
 
-enum Provider {
-  KAKAO
-  GOOGLE
+// ============================================================
+// 회사 이메일 인증 요청 — 가입 전 인증코드 challenge
+// ============================================================
+model EmailVerificationChallenge {
+  id                 String    @id @default(uuid())
+  companyId          String    @map("company_id")
+  inviteCodeId       String    @map("invite_code_id")
+  companyEmail       String    @map("company_email") @db.VarChar(255)
+  codeHash           String    @map("code_hash") @db.VarChar(255) // 6자리 코드의 해시. 원문 저장 금지
+  expiresAt          DateTime  @map("expires_at")
+  usedAt             DateTime? @map("used_at")
+  resendAvailableAt  DateTime  @map("resend_available_at")
+
+  createdAt          DateTime  @default(now()) @map("created_at")
+
+  company            Company   @relation(fields: [companyId], references: [id])
+  inviteCode         InviteCode @relation(fields: [inviteCodeId], references: [id])
+
+  @@index([companyEmail, expiresAt])
+  @@index([companyId, companyEmail, usedAt])
+  @@map("email_verification_challenges")
 }
 
 enum Role {
@@ -464,8 +591,8 @@ enum MessageType {
 | name | VARCHAR(100) | NOT NULL | 이름 |
 | phone | VARCHAR(20) | | 전화번호 |
 | image_url | TEXT | | 프로필 이미지 |
-| provider | ENUM | NULL | KAKAO, GOOGLE |
-| provider_id | VARCHAR(255) | | 소셜 ID |
+| password_hash | VARCHAR(255) | NOT NULL | 비밀번호 해시. 원문 저장 금지 |
+| email_verified_at | TIMESTAMP | | 회사 이메일 인증 완료 시각 |
 | role | ENUM | DEFAULT PASSENGER | PASSENGER, DRIVER, BOTH, ADMIN |
 | rating | DECIMAL(2,1) | DEFAULT 0.0 | 평균 평점 |
 | ride_count | INT | DEFAULT 0 | 운행 횟수 |
@@ -478,7 +605,25 @@ enum MessageType {
 **인덱스**:
 - `(company_id)`: 회사 도메인 구성원 목록
 - `(company_id, role)`: 도메인 운영자/차주/탑승자 필터
-- `(provider, provider_id)`: 소셜 로그인 계정 조회
+- `(company_id, email_verified_at)`: 인증 완료 구성원 필터
+
+### email_verification_challenges
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| id | UUID | PK | 인증 요청 ID |
+| company_id | UUID | FK → companies, NOT NULL | 가입 대상 회사 |
+| invite_code_id | UUID | FK → invite_codes, NOT NULL | 검증에 사용한 가입 코드 |
+| company_email | VARCHAR(255) | NOT NULL | 인증 대상 회사 이메일(lowercase 정규화) |
+| code_hash | VARCHAR(255) | NOT NULL | 6자리 인증코드 해시. 원문 저장 금지 |
+| expires_at | TIMESTAMP | NOT NULL | 인증코드 만료 시각(기본 10분) |
+| used_at | TIMESTAMP | | 인증 완료 시각. null이면 미사용 |
+| resend_available_at | TIMESTAMP | NOT NULL | 재발송 가능 시각(기본 60초 후) |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT now() | 생성일 |
+
+**인덱스**:
+- `(company_email, expires_at)`: 최신 인증 요청/만료 검증
+- `(company_id, company_email, used_at)`: 회사별 이메일 인증 상태 조회
 
 ### rides
 
@@ -771,14 +916,18 @@ JOIN companies c ON c.id = ic.company_id;
    - current_uses < max_uses
    - expires_at IS NULL OR expires_at > NOW()
    ↓
-3. companies.domain 과 회사 이메일/OAuth 계정 이메일 도메인 일치 확인
-   ↓
-4. users 테이블에 company_id 설정하여 생성
+3. companies.domain 과 회사 이메일 도메인 일치 확인
+    ↓
+4. email_verification_challenges 생성 후 회사 이메일로 인증코드 발송
+    ↓
+5. 인증코드 검증 + 비밀번호 정책 검증
+    ↓
+6. users 테이블에 company_id, email, password_hash, email_verified_at 설정하여 생성
    - employee_id (선택) 입력
    ↓
-5. invite_codes.current_uses += 1
+7. invite_codes.current_uses += 1
    ↓
-6. 가입 완료 → 같은 회사 이메일 도메인 카풀 매칭 가능
+8. 가입 완료 → 같은 회사 이메일 도메인 카풀 매칭 가능
 ```
 
 ---
@@ -799,6 +948,10 @@ CREATE INDEX idx_companies_domain ON companies(domain);
 CREATE UNIQUE INDEX invite_codes_company_id_code_key ON invite_codes(company_id, code);
 CREATE INDEX idx_invite_codes_created_by ON invite_codes(created_by);
 CREATE INDEX idx_invite_codes_company_active_expires ON invite_codes(company_id, is_active, expires_at);
+
+-- 회사 이메일 인증 요청 조회 및 재발송/만료 검증
+CREATE INDEX idx_email_verification_email_expires ON email_verification_challenges(company_email, expires_at);
+CREATE INDEX idx_email_verification_company_email_used ON email_verification_challenges(company_id, company_email, used_at);
 ```
 
 ### 사용자/차량
@@ -811,8 +964,8 @@ CREATE INDEX idx_users_company_role ON users(company_id, role);
 -- 같은 기업 내 사번 중복 방지
 CREATE UNIQUE INDEX users_company_id_employee_id_key ON users(company_id, employee_id);
 
--- 소셜 로그인 provider 계정 조회
-CREATE INDEX idx_users_provider_provider_id ON users(provider, provider_id);
+-- 회사 이메일 인증 완료 구성원 필터
+CREATE INDEX idx_users_company_email_verified ON users(company_id, email_verified_at);
 
 -- 사용자 차량 조회 및 사용자별 차량번호 중복 방지
 CREATE UNIQUE INDEX vehicles_user_id_plate_key ON vehicles(user_id, plate);

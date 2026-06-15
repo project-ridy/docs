@@ -1,7 +1,7 @@
 # Ridy — 시스템 아키텍처
 
 > **회사 이메일 도메인 기반 폐쇄형 카풀 서비스**
-> 가입 코드 입력, 회사 이메일 검증, OAuth 가입으로 회사 도메인 경계를 보장하고, 같은 회사 이메일 도메인 구성원끼리만 카풀할 수 있게 한다. 관리자 대시보드, ESG 리포트, 회사 계약/구독은 후속 B2B 확장 범위다.
+> 가입 코드 입력, 회사 이메일 인증코드 검증, 비밀번호 설정으로 회사 도메인 경계를 보장하고, 같은 회사 이메일 도메인 구성원끼리만 카풀할 수 있게 한다. 관리자 대시보드, ESG 리포트, 회사 계약/구독은 후속 B2B 확장 범위다.
 
 ---
 
@@ -75,15 +75,15 @@ flowchart TB
                                                        ▼ 가입 시 입력
                                                ┌──────────────────┐
                                                │ 가입 코드 검증    │
-                                               │ 회사 이메일 검증  │
-                                               │ OAuth 가입       │
+                                                │ 이메일 코드 발송 │
+                                                │ 비밀번호 설정    │
                                                │ companyId 매핑   │
                                                └──────────────────┘
 ```
 
 - 운영자가 도메인 운영 화면에서 가입 코드를 생성·재발급한다.
 - 신규 사용자는 회원가입 시 가입 코드와 회사 이메일을 입력해야 한다.
-- `Company.domain`과 회사 이메일/OAuth 계정 이메일의 도메인이 일치해야 해당 `company`에 자동 매핑된다.
+- `Company.domain`과 회사 이메일 도메인이 일치하고, 이메일 인증코드 검증이 끝나야 해당 `company`에 자동 매핑된다.
 - 가입 코드 또는 회사 이메일 도메인 검증이 실패하면 가입할 수 없다 (폐쇄성 보장).
 
 ### 매칭 제약 (회사 이메일 도메인 경계)
@@ -153,7 +153,7 @@ flowchart TB
 
 | 서비스 | 용도 |
 |---|---|
-| 카카오/구글/Apple | 소셜 로그인 |
+| AWS SES | 회사 이메일 인증코드 발송 |
 | 토스페이먼츠 | 결제 |
 | AWS SNS | 푸시 알림 |
 | Google Maps / Mapbox | 지도, 경로 |
@@ -168,7 +168,7 @@ flowchart TB
 | 서비스 | 책임 | 소유 데이터 | 공개 계약 |
 |---|---|---|---|
 | **GraphQL Gateway** | 외부 GraphQL schema, 인증 컨텍스트, 회사 스코프, 화면 데이터 조합 | 없음 | `POST /graphql` |
-| **Auth Service** | 소셜 로그인, JWT, 세션, 권한 판단 | `users`, `sessions`, `oauth_accounts` | Auth query/command |
+| **Auth Service** | 회사 이메일 인증코드, 비밀번호 해시, JWT, 세션, 권한 판단 | `users`, `sessions`, `email_verification_challenges` | Auth query/command |
 | **Company Service** | 회사, 가입 코드, 회사 이메일 도메인 검증, 구성원 목록, 후속 운영 통계 | `companies`, `invite_codes`, `member_snapshots` | Company query/command, events |
 | **Matching Service** | 카풀 등록, 회사 도메인 내 검색, 매칭 요청/수락 | `rides`, `ride_requests`, `vehicles`, `reviews` | Matching query/command, events |
 | **Chat Service** | 채팅방, 메시지 이력, 읽음 상태 | `chat_rooms`, `messages`, `read_receipts` | Chat query, realtime events |
@@ -442,19 +442,20 @@ type Mutation {
 ## 인증·가입 흐름
 
 ```
-1. 소셜 로그인 (카카오/구글/Apple) → OAuth 토큰 획득
-2. 최초 가입자 → 가입 코드 + 회사 이메일 입력 화면
-3. 가입 코드 검증:
+1. 최초 가입자 → 가입 코드 + 회사 이메일 입력 화면
+2. 가입 코드 검증:
    - 존재 여부 → InviteCode.isActive && !usedAt
    - 만료 여부 → expiresAt 확인
    - 회원 수 초과 → Company.maxMembers 확인
-4. 회사 이메일/OAuth 이메일 도메인과 Company.domain 일치 확인
-5. 검증 통과 → User 생성 (companyId = inviteCode.companyId)
-6. InviteCode.usedBy, usedAt 업데이트
-7. JWT 발급 → 클라이언트 저장
+3. 회사 이메일 도메인과 Company.domain 일치 확인
+4. 회사 이메일 인증코드 발송 및 검증
+5. 비밀번호 정책 검증 후 passwordHash 저장
+6. 검증 통과 → User 생성 (companyId = inviteCode.companyId)
+7. InviteCode 사용 횟수 증가
+8. JWT 발급 → 클라이언트 저장
 ```
 
-> 이미 가입된 유저는 소셜 로그인만으로 바로 JWT 발급.
+> 이미 가입된 유저는 회사 이메일 + 비밀번호 로그인으로 JWT를 발급받는다.
 
 ---
 
@@ -462,7 +463,7 @@ type Mutation {
 
 | 계층 | 조치 |
 |---|---|
-| **가입** | 가입 코드와 회사 이메일 도메인 검증 없으면 가입 불가 |
+| **가입** | 가입 코드, 회사 이메일 도메인 검증, 이메일 인증코드 검증 없으면 가입 불가 |
 | **인가** | 모든 쿼리/뮤테이션에 `@auth` + `@companyScope` 적용 |
 | **매칭** | `searchRides` 결과가 항상 `companyId`로 필터링됨 |
 | **채팅** | 방(Room) 참여 시 `companyId` 일치 확인 |
@@ -525,7 +526,7 @@ type Mutation {
 
 | 항목 | 변경 전 (오픈 카풀) | 변경 후 (회사 이메일 도메인 폐쇄형) |
 |---|---|---|
-| 가입 | 소셜 로그인 즉시 가입 | **가입 코드 + 회사 이메일 검증 + OAuth 필수** |
+| 가입 | 오픈 가입 | **가입 코드 + 회사 이메일 인증코드 + 비밀번호 설정 필수** |
 | 유저 모델 | `User` 독립 | `User.companyId` 필수 (FK → Company) |
 | 매칭 검색 | 전체 유저 대상 | **같은 companyId/domain 유저만** |
 | 관리 기능 | 없음 | **도메인 운영 화면** (가입 코드, 구성원, 기본 통계). ESG/계약은 후속 B2B |
