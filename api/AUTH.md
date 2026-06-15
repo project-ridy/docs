@@ -2,7 +2,15 @@
 
 ## 개요
 
-가입 코드 + 회사 이메일 검증 + 소셜 로그인(카카오/구글). 같은 회사 이메일 도메인 구성원만 가입 가능.
+가입 코드 + 회사 이메일 인증코드 + 비밀번호 기반 인증. 같은 회사 이메일 도메인 구성원만 가입 가능하며, OAuth 간편로그인(카카오/구글)은 인증 SSoT에서 제거한다.
+
+인증 플로우는 다음 순서를 따른다.
+
+1. 사용자가 가입 코드와 회사 이메일을 입력한다.
+2. backend가 가입 코드와 회사 도메인을 검증한 뒤 회사 이메일로 6자리 인증코드를 발송한다.
+3. 사용자가 인증코드와 비밀번호를 입력한다.
+4. backend가 인증코드를 검증하고 비밀번호 해시를 저장한 뒤 AuthPayload를 발급한다.
+5. 기존 사용자는 회사 이메일 + 비밀번호로 로그인한다.
 
 ---
 
@@ -19,7 +27,7 @@ type Company {
   id: ID!
   name: String!
   inviteCode: String!
-  domain: String
+  domain: String!
   plan: CompanyPlan!
   maxMembers: Int!
   memberCount: Int!
@@ -45,12 +53,11 @@ type User {
   name: String!
   phone: String
   imageUrl: String
-  provider: String
-  providerId: String
   role: Role!
   companyId: String!
   company: Company!
   employeeId: String
+  emailVerifiedAt: String
   rating: Float!
   rideCount: Int!
   createdAt: String!
@@ -69,16 +76,27 @@ type InviteCode {
   createdAt: String!
 }
 
-input JoinInput {
+type EmailVerificationChallenge {
+  id: ID!
+  companyEmail: String!
+  expiresAt: String!
+  resendAvailableAt: String!
+}
+
+input RequestCompanyEmailVerificationInput {
   inviteCode: String!
   companyEmail: String!
-  provider: String!
-  oauthToken: String!
+}
+
+input CompleteEmailPasswordSignupInput {
+  challengeId: ID!
+  verificationCode: String!
+  password: String!
 }
 
 input LoginInput {
-  provider: String!
-  oauthToken: String!
+  companyEmail: String!
+  password: String!
 }
 
 input UpdateProfileInput {
@@ -101,7 +119,8 @@ type Query {
 }
 
 type Mutation {
-  joinWithInviteCode(input: JoinInput!): AuthPayload!
+  requestCompanyEmailVerification(input: RequestCompanyEmailVerificationInput!): EmailVerificationChallenge!
+  completeEmailPasswordSignup(input: CompleteEmailPasswordSignupInput!): AuthPayload!
   login(input: LoginInput!): AuthPayload!
   refreshToken(token: String!): AuthPayload!
   updateProfile(input: UpdateProfileInput!): User!
@@ -112,19 +131,28 @@ type Mutation {
 
 ---
 
-## 기능: 가입 코드 기반 가입 (`joinWithInviteCode`)
+## 기능: 회사 이메일 인증코드 발송 (`requestCompanyEmailVerification`)
 
 ### 설명
 
-운영자가 배포한 가입 코드, 회사 이메일, 소셜 OAuth 토큰으로 가입한다. 가입 코드를 검증한 뒤 `companyEmail`의 도메인이 `Company.domain`과 일치하는지 확인하고, OAuth 계정 이메일도 같은 도메인이어야 한다. 검증이 끝나면 해당 회사에 자동 매핑한다.
+운영자가 배포한 가입 코드와 회사 이메일을 검증한 뒤, 회사 이메일로 6자리 인증코드를 발송한다. 이 mutation은 계정을 생성하지 않고 `EmailVerificationChallenge`만 생성한다.
+
+검증 규칙:
+
+- 가입 코드는 trim + uppercase 정규화 후 조회한다.
+- 회사 이메일은 trim + lowercase 정규화 후 저장한다.
+- `companyEmail` 도메인은 가입 코드가 속한 `Company.domain`과 일치해야 한다.
+- 인증코드는 원문 저장 금지. backend는 인증코드 해시만 저장한다.
+- 인증코드는 10분 뒤 만료된다.
+- 재발송은 같은 이메일 기준 60초 후 허용한다.
 
 ### 정상 케이스
 
 | # | 케이스 | 입력 | 기대 결과 |
 |---|--------|------|-----------|
-| A1 | 정상 가입 | 유효한 가입 코드 + 회사 이메일 + 카카오 토큰 | AuthPayload 발급, user.companyId 설정 |
-| A2 | 구글 가입 | 유효한 가입 코드 + 회사 이메일 + 구글 토큰 | 동일하게 가입 성공 |
-| A3 | 만료 임박 코드 | expiresAt 1시간 전 코드 | 가입 성공 (아직 유효) |
+| A1 | 정상 인증코드 발송 | 유효한 가입 코드 + 회사 이메일 | 인증코드 이메일 발송, challenge 반환 |
+| A2 | 가입 코드 소문자/공백 | ` abc123 ` + 회사 이메일 | `ABC123`으로 정규화 후 성공 |
+| A3 | 회사 이메일 대소문자 | `Jane@Acme.CO.KR` | lowercase 정규화 후 성공 |
 
 ### 예외 케이스
 
@@ -135,21 +163,63 @@ type Mutation {
 | E3 | 사용 한도 초과 | currentUses >= maxUses | `BAD_REQUEST: 가입 코드 사용 한도가 초과되었습니다` |
 | E4 | 비활성화된 코드 | isActive=false | `BAD_REQUEST: 비활성화된 가입 코드입니다` |
 | E5 | 회원 정원 초과 | company.memberCount >= maxMembers | `BAD_REQUEST: 회사 정원이 초과되었습니다` |
-| E6 | 이미 가입된 이메일 | 기존 유저 이메일 | `CONFLICT: 이미 가입된 계정입니다` |
-| E7 | 빈 OAuth 토큰 | oauthToken="" | `UNAUTHORIZED: OAuth 토큰이 필요합니다` |
-| E8 | 지원하지 않는 provider | provider="naver" | `BAD_REQUEST: 지원하지 않는 로그인 방식입니다` |
-| E9 | 만료된 소셜 토큰 | 카카오에서 토큰 거절 | `UNAUTHORIZED: 소셜 로그인에 실패했습니다` |
-| E10 | 회사 이메일 누락 | companyEmail="" | `BAD_REQUEST: 회사 이메일은 필수입니다` |
-| E11 | 회사 이메일 도메인 불일치 | company.domain과 다른 companyEmail | `FORBIDDEN: 회사 이메일 도메인이 일치하지 않습니다` |
-| E12 | OAuth 이메일 도메인 불일치 | OAuth 이메일과 companyEmail 도메인 불일치 | `FORBIDDEN: OAuth 계정 이메일과 회사 이메일이 일치하지 않습니다` |
+| E6 | 이미 가입된 이메일 | 기존 user.email | `CONFLICT: 이미 가입된 계정입니다` |
+| E7 | 회사 이메일 누락 | companyEmail="" | `BAD_REQUEST: 회사 이메일은 필수입니다` |
+| E8 | 회사 이메일 형식 오류 | `jane-company` | `BAD_REQUEST: 올바른 회사 이메일을 입력해주세요` |
+| E9 | 회사 이메일 도메인 불일치 | company.domain과 다른 companyEmail | `FORBIDDEN: 회사 이메일 도메인이 일치하지 않습니다` |
+| E10 | 재발송 제한 | 60초 이내 재요청 | `TOO_MANY_REQUESTS: 인증코드는 60초 후 다시 요청할 수 있습니다` |
+| E11 | 이메일 발송 실패 | 메일 provider 장애 | `SERVICE_UNAVAILABLE: 인증 이메일 발송에 실패했습니다` |
 
 ### 엣지 케이스
 
 | # | 케이스 | 설명 | 기대 결과 |
 |---|--------|------|-----------|
-| X1 | 동시 가입 | 같은 코드로 2명 동시 가입 (maxUses=1) | 1명만 성공, 나머지 E3 |
-| X2 | 이메일 도메인 대소문자 차이 | `Acme.CO.KR` vs `acme.co.kr` | 정규화 후 일치하면 가입 성공 |
-| X3 | 관리자 본인 가입 | admin이 자기 코드로 재가입 | E6 (이미 가입됨) |
+| X1 | 동시 발송 요청 | 같은 이메일로 동시에 요청 | 하나의 최신 challenge만 유효 |
+| X2 | 도메인 대소문자 차이 | `Acme.CO.KR` vs `acme.co.kr` | 정규화 후 일치하면 성공 |
+| X3 | 이전 challenge 존재 | 만료 전 재요청 | 이전 challenge 무효화 후 새 challenge 발급 |
+
+---
+
+## 기능: 인증코드 검증 + 비밀번호 설정 가입 (`completeEmailPasswordSignup`)
+
+### 설명
+
+사용자가 이메일로 받은 인증코드와 비밀번호를 제출하면, backend가 challenge를 검증하고 유저를 생성한다. 비밀번호는 강한 단방향 해시로 저장하며 원문 저장은 금지한다.
+
+검증 규칙:
+
+- challenge는 존재하고 만료되지 않아야 한다.
+- 인증코드는 challenge에 저장된 해시와 일치해야 한다.
+- 인증 성공 시 같은 challenge는 재사용할 수 없다.
+- 가입 코드 사용 횟수(`InviteCode.currentUses`)와 회사 구성원 수(`Company.memberCount`) 증가는 유저 생성과 같은 transaction에서 처리한다.
+- 비밀번호 정책: 최소 10자, 영문/숫자 포함.
+
+### 정상 케이스
+
+| # | 케이스 | 입력 | 기대 결과 |
+|---|--------|------|-----------|
+| A1 | 정상 가입 완료 | 유효 challenge + 인증코드 + 강한 비밀번호 | User 생성, emailVerifiedAt 설정, AuthPayload 발급 |
+| A2 | 인증코드 앞뒤 공백 | ` 123456 ` | trim 후 일치하면 가입 성공 |
+
+### 예외 케이스
+
+| # | 케이스 | 입력 | 기대 결과 |
+|---|--------|------|-----------|
+| E1 | 존재하지 않는 challenge | invalid id | `NOT_FOUND: 인증 요청을 찾을 수 없습니다` |
+| E2 | 만료된 인증코드 | expiresAt 경과 | `BAD_REQUEST: 인증코드가 만료되었습니다` |
+| E3 | 잘못된 인증코드 | 불일치 코드 | `BAD_REQUEST: 인증코드가 일치하지 않습니다` |
+| E4 | 이미 사용된 challenge | usedAt 존재 | `BAD_REQUEST: 이미 사용된 인증 요청입니다` |
+| E5 | 약한 비밀번호 | 정책 미충족 | `BAD_REQUEST: 비밀번호는 10자 이상이며 영문과 숫자를 포함해야 합니다` |
+| E6 | 이미 가입된 이메일 | race로 기존 User 생성됨 | `CONFLICT: 이미 가입된 계정입니다` |
+| E7 | 회사 정원 초과 | 검증 후 정원 초과 | `BAD_REQUEST: 회사 정원이 초과되었습니다` |
+| E8 | 가입 코드 사용 한도 초과 | 검증 후 maxUses 도달 | `BAD_REQUEST: 가입 코드 사용 한도가 초과되었습니다` |
+
+### 엣지 케이스
+
+| # | 케이스 | 설명 | 기대 결과 |
+|---|--------|------|-----------|
+| X1 | 동시 가입 완료 | 같은 challenge 동시 제출 | 하나만 성공, 나머지는 E4 또는 E6 |
+| X2 | maxUses=1 race | 마지막 사용 횟수 경쟁 | transaction으로 1명만 성공 |
 
 ---
 
@@ -157,21 +227,24 @@ type Mutation {
 
 ### 설명
 
-기존 가입 유저의 소셜 로그인. 이메일 기준으로 유저 조회.
+기존 가입 유저가 회사 이메일과 비밀번호로 로그인한다. OAuth provider/oauthToken 기반 로그인은 제공하지 않는다.
 
 ### 정상 케이스
 
-| # | 케이스 | 기대 결과 |
-|---|--------|-----------|
-| A1 | 카카오 로그인 | AuthPayload 발급 |
-| A2 | 구글 로그인 | AuthPayload 발급 |
+| # | 케이스 | 입력 | 기대 결과 |
+|---|--------|------|-----------|
+| A1 | 정상 로그인 | companyEmail + password | AuthPayload 발급 |
+| A2 | 이메일 대소문자/공백 | ` Jane@Acme.CO.KR ` | lowercase + trim 정규화 후 로그인 성공 |
 
 ### 예외 케이스
 
 | # | 케이스 | 기대 결과 |
 |---|--------|-----------|
-| E1 | 미가입 이메일 | `NOT_FOUND: 가입되지 않은 계정입니다. 가입 코드와 회사 이메일로 가입해주세요.` |
-| E2 | 만료된 소셜 토큰 | `UNAUTHORIZED` |
+| E1 | 미가입 이메일 | `NOT_FOUND: 가입되지 않은 계정입니다. 가입 코드와 회사 이메일 인증으로 가입해주세요.` |
+| E2 | 비밀번호 불일치 | `UNAUTHORIZED: 이메일 또는 비밀번호가 올바르지 않습니다` |
+| E3 | 이메일 미검증 계정 | `FORBIDDEN: 회사 이메일 인증이 필요합니다` |
+| E4 | 빈 이메일 | `BAD_REQUEST: 회사 이메일은 필수입니다` |
+| E5 | 빈 비밀번호 | `BAD_REQUEST: 비밀번호는 필수입니다` |
 
 ---
 
