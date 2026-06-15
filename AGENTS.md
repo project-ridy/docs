@@ -32,7 +32,17 @@
 - Orchestrator가 구현 계획서 리뷰 & 승인 후 Frontend Developer/Backend Developer/Designer 에이전트에 작업 할당
 - 할당 시 이슈 번호, 관련 기획서 경로, 관련 docs 문서 경로, 완료 조건을 명확히 전달
 - Frontend Developer/Backend Developer/Designer PR이 기획서 + docs 스펙과 일치하는지 검증
+- Frontend Developer/Backend Developer PR은 계획서 Case ID(A/E/X)별 구현 파일/단위와 테스트 파일/테스트명 확인표가 있어야 승인한다
+- Case ID 확인표가 비었거나 계획서와 불일치하면 PR을 반려하고 BLOCKED 또는 변경 요청으로 처리한다
 - BLOCKED 이슈는 Orchestrator가 docs 업데이트 또는 agents 레포 업데이트로 해결
+
+### 기획-코드-테스트 검증
+
+- 구현 계획서는 `Case ID`, `기획 A/E/X 링크`, `구현 파일/단위`, `테스트 파일/테스트명`, `완료 기준`을 포함한다.
+- backend/frontend 이슈는 계획서 경로와 Case ID별 구현/테스트 예정 표를 포함한다.
+- backend/frontend PR은 Case ID별 실제 구현/테스트 확인표와 검증 결과를 포함한다.
+- docs에 없는 API/DB/디자인 동작 또는 계획서에 없는 Case는 임의 구현하지 않는다.
+- Orchestrator는 위 항목이 누락된 PR을 완료로 처리하지 않는다.
 
 ### 문서 작성 규칙
 - H1(`#`)은 파일당 1개
