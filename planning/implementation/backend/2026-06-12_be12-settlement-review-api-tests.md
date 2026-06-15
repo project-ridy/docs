@@ -15,8 +15,8 @@
 
 ## 관련 docs 문서
 
-- `docs/planning/implementation/2026-06-12_be10-settlement-payment-api.md`
-- `docs/planning/implementation/2026-06-12_be11-review-api.md`
+- `docs/planning/implementation/backend/2026-06-12_be10-settlement-payment-api.md`
+- `docs/planning/implementation/backend/2026-06-12_be11-review-api.md`
 - `docs/api/PAYMENT.md`
 - `docs/architecture/DATABASE.md`
 

@@ -21,8 +21,8 @@
 - `docs/design/WIREFRAMES.md`
 - `docs/api/GRAPHQL_GATEWAY.md`
 - `docs/api/CHAT.md`
-- `docs/planning/implementation/2026-06-12_be08-chat-websocket-server.md`
-- `docs/planning/implementation/2026-06-12_be09-chat-api-tests.md`
+- `docs/planning/implementation/backend/2026-06-12_be08-chat-websocket-server.md`
+- `docs/planning/implementation/backend/2026-06-12_be09-chat-api-tests.md`
 
 ## 아키텍처 접근
 

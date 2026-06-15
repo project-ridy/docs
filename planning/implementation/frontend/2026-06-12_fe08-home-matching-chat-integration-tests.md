@@ -14,9 +14,9 @@
 - `docs/design/WIREFRAMES.md`
 - `docs/design/DESIGN_SYSTEM.md`
 - `docs/api/GRAPHQL_GATEWAY.md`
-- `docs/planning/implementation/2026-06-12_fe05-home-graphql-integration.md`
-- `docs/planning/implementation/2026-06-12_fe06-matchings-pages.md`
-- `docs/planning/implementation/2026-06-12_fe07-chat-screen.md`
+- `docs/planning/implementation/frontend/2026-06-12_fe05-home-screen.md`
+- `docs/planning/implementation/frontend/2026-06-12_fe06-matchings-pages.md`
+- `docs/planning/implementation/frontend/2026-06-12_fe07-chat-screen.md`
 
 ## 아키텍처 접근
 

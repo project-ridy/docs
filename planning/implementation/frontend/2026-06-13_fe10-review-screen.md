@@ -14,8 +14,8 @@
 
 ## 관련 문서
 
-- `docs/planning/implementation/2026-06-12_be11-review-api.md`
-- `docs/planning/implementation/2026-06-12_be12-settlement-review-api-tests.md`
+- `docs/planning/implementation/backend/2026-06-12_be11-review-api.md`
+- `docs/planning/implementation/backend/2026-06-12_be12-settlement-review-api-tests.md`
 - `docs/design/SCREENS.md` S12 평점/리뷰
 - `docs/design/WIREFRAMES.md`
 - `docs/design/DESIGN_SYSTEM.md`

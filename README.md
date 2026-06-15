@@ -53,7 +53,7 @@ docs/
 **모든 작업은 GitHub Organization Project에서 관리됩니다.**
 📍 프로젝트 보드: https://github.com/orgs/project-ridy/projects/1
 
-1. 사용자 요청 → Planner가 이슈별 구현 계획서 작성 (`planning/implementation/`에 저장)
+1. 사용자 요청 → Planner가 이슈별 구현 계획서 작성 (`planning/implementation/frontend/` 또는 `planning/implementation/backend/`에 저장)
 2. Orchestrator가 이 설계 문서(`docs`)를 갱신하거나 확인
 3. 구현 계획서 + 설계 문서를 기준으로 Frontend Developer/Backend Developer/Designer가 구현
 4. PR 생성 → 머지 → Project 이슈 Done 처리
