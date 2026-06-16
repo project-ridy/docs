@@ -1,5 +1,14 @@
 # Ridy — 와이어프레임
 
+## 공통 시각 패턴
+
+- 와이어프레임의 구조는 유지하되 실제 구현은 `DESIGN_SYSTEM.md`의 Socar Frame 참고 기반 token과 컴포넌트 규칙을 따릅니다.
+- 상단 제목/뒤로가기/주요 액션은 TopAppBar 패턴으로 구현합니다.
+- 하단 탭은 활성 탭에 Primary 색상과 `aria-current="page"`를 함께 적용합니다.
+- 카드형 리스트는 `title → route/time → price/seats/status` 정보 순서를 유지합니다.
+- `OPEN`, `MATCHED`, `PENDING`, `FAILED`, `CANCELLED` 같은 상태는 Badge + 텍스트로 표시합니다.
+- Primary CTA는 각 화면의 핵심 진행 액션 하나에만 사용합니다.
+
 ## 0. 랜딩 페이지
 
 ```
