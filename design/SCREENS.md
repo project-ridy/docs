@@ -44,13 +44,14 @@ S10 정산 현황
 
 ### 공통 디자인 시스템 적용 규칙
 
-- 모든 화면은 `DESIGN_SYSTEM.md`의 Socar Frame 참고 기반 token을 우선 사용합니다.
+- 모든 화면은 `DESIGN_SYSTEM.md`의 KT Seamless Flow 참고 기반 token을 우선 사용합니다.
+- 화면의 기본 정보 구조는 Gray-first hierarchy를 따르고, Accent/Feedback 색상은 CTA·상태·포커스에만 제한적으로 사용합니다.
 - Primary CTA는 화면당 하나를 원칙으로 하며, 보조 액션은 Secondary/Ghost 버튼으로 분리합니다.
 - 상태 표현은 Badge 색상과 텍스트를 함께 사용합니다. 색상만으로 `OPEN`, `MATCHED`, `PENDING`, `FAILED`, `CANCELLED`를 구분하지 않습니다.
 - 입력 필드는 label 또는 명시적인 `aria-label`을 가져야 하며, placeholder는 label을 대체하지 않습니다.
 - Mobile 주요 CTA와 입력은 48px 높이를 기본으로 하고, 모든 터치 타깃은 최소 44px입니다.
 - 화면 상단 이동/제목/보조 액션은 TopAppBar 패턴을 사용합니다. Mobile에서는 주요 action 1개 이하만 노출합니다.
-- Socar Frame package 직접 설치는 Tailwind v4 호환성 검증 전까지 제외하며, token/pattern 기반으로만 반영합니다.
+- KT Figma UI Kit, 비공개 asset, npm package 직접 설치는 라이선스/호환성 검증 전까지 제외하며, 공개 문서 기반 token/pattern으로만 반영합니다.
 
 ### S00 랜딩 페이지
 - **히어로**: 슬로건, 서비스 가치, 시작 CTA, 보조 CTA
