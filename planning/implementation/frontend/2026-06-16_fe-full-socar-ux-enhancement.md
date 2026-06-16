@@ -18,8 +18,8 @@
 
 ## 관련 이슈
 
-- docs 계획 이슈: 생성 필요 — `[DOCS] 전체 프론트 Socar UX 고도화 구현 계획`
-- frontend 구현 이슈: 생성 필요 — `[FEAT] 전체 프론트 Socar UX 고도화`
+- docs 계획 이슈: `project-ridy/docs#56` — `[DOCS] 전체 프론트 Socar UX 고도화 구현 계획`
+- frontend 구현 이슈: `project-ridy/frontend#46` — `[FEAT] 전체 프론트 Socar UX 고도화`
 - 선행 완료:
   - `project-ridy/docs#54` — Socar Frame 기반 디자인 시스템 기획
   - `project-ridy/frontend#41` / PR `#42` — 디자인 시스템 개선 구현
