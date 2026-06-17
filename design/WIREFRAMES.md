@@ -2,7 +2,8 @@
 
 ## 공통 시각 패턴
 
-- 와이어프레임의 구조는 유지하되 실제 구현은 `DESIGN_SYSTEM.md`의 Socar Frame 참고 기반 token과 컴포넌트 규칙을 따릅니다.
+- 와이어프레임의 구조는 유지하되 실제 구현은 `DESIGN_SYSTEM.md`의 KT Seamless Flow 참고 기반 token과 컴포넌트 규칙을 따릅니다.
+- 화면의 대부분은 Gray-first hierarchy로 구성하고, Accent/Feedback 색상은 CTA·상태·포커스에만 사용합니다.
 - 상단 제목/뒤로가기/주요 액션은 TopAppBar 패턴으로 구현합니다.
 - 하단 탭은 활성 탭에 Primary 색상과 `aria-current="page"`를 함께 적용합니다.
 - 카드형 리스트는 `title → route/time → price/seats/status` 정보 순서를 유지합니다.
