@@ -1,7 +1,7 @@
-# Ridy — 데이터베이스 스키마 (회사 이메일 인증 기반 폐쇄형 카풀 서비스)
+# Ridy — 데이터베이스 스키마 (회사 이메일 인증 기반 동네→직장 카풀 서비스)
 
 > Ridy는 회사 이메일 도메인 기반 폐쇄형 카풀 서비스입니다. 모든 유저는 반드시 가입 코드와 회사 이메일 인증코드 검증을 거쳐 소속 회사(Company)에 매핑되어야 하며,
-> 카풀 매칭은 **같은 회사 이메일 도메인(company_id/domain)에 소속된 구성원 간에만** 이루어집니다.
+> 카풀 매칭은 **같은 회사 이메일 도메인(company_id/domain)에 소속된 구성원 간에만** 이루어지며, MVP 매칭 방향은 **동네 출발지 → 회사 근무지**로 제한됩니다.
 
 ---
 
@@ -13,6 +13,7 @@ erDiagram
   COMPANIES ||--o{ INVITE_CODES : issues
   COMPANIES ||--o{ EMAIL_VERIFICATION_CHALLENGES : validates_email
   COMPANIES ||--o{ RIDES : scopes
+  COMPANIES ||--o{ WORKPLACES : owns
   COMPANIES ||--o{ SETTLEMENTS : scopes
 
   USERS ||--o{ VEHICLES : owns
@@ -25,6 +26,7 @@ erDiagram
   USERS ||--o{ INVITE_CODES : creates
 
   INVITE_CODES ||--o{ EMAIL_VERIFICATION_CHALLENGES : authorizes
+  WORKPLACES ||--o{ RIDES : destination_for
   RIDES ||--o{ RIDE_REQUESTS : receives
   RIDES ||--o{ REVIEWS : reviewed_by
   RIDES ||--o| CHAT_ROOMS : opens
@@ -98,6 +100,9 @@ erDiagram
     string id PK
     string company_id FK
     string driver_id FK
+    string workplace_id FK
+    string pickup_label
+    PickupPrivacy pickup_privacy
     decimal departure_lat
     decimal departure_lng
     string departure_addr
@@ -111,6 +116,18 @@ erDiagram
     datetime recurring_end
     json preferences
     RideStatus status
+    datetime created_at
+    datetime updated_at
+  }
+
+  WORKPLACES {
+    string id PK
+    string company_id FK
+    string name
+    decimal lat
+    decimal lng
+    string address
+    boolean is_default
     datetime created_at
     datetime updated_at
   }
@@ -209,9 +226,32 @@ model Company {
   emailVerificationChallenges EmailVerificationChallenge[]
   rides       Ride[]
   settlements Settlement[]
+  workplaces  Workplace[]
 
   @@index([domain])
   @@map("companies")
+}
+
+// ============================================================
+// 회사 근무지 (Workplace) — 동네→직장 카풀의 목적지
+// ============================================================
+model Workplace {
+  id        String   @id @default(uuid())
+  companyId String   @map("company_id")
+  name      String   @db.VarChar(100)
+  lat       Decimal  @db.Decimal(10, 7)
+  lng       Decimal  @db.Decimal(10, 7)
+  address   String   @db.VarChar(255)
+  isDefault Boolean  @default(false) @map("is_default")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt      @map("updated_at")
+
+  company   Company  @relation(fields: [companyId], references: [id])
+  rides     Ride[]
+
+  @@index([companyId, isDefault])
+  @@map("workplaces")
 }
 
 enum Plan {
@@ -342,6 +382,9 @@ model Ride {
   id              String       @id @default(uuid())
   companyId       String       @map("company_id")              // ★ 소속 기업 (격리 키)
   driverId        String       @map("driver_id")
+  workplaceId     String       @map("workplace_id")
+  pickupLabel     String       @map("pickup_label") @db.VarChar(100) // 예: 성수동 인근, 왕십리역 도보 5분
+  pickupPrivacy   PickupPrivacy @default(APPROXIMATE) @map("pickup_privacy")
   departureLat    Decimal      @map("departure_lat") @db.Decimal(10, 7)
   departureLng    Decimal      @map("departure_lng") @db.Decimal(10, 7)
   departureAddr   String?      @map("departure_addr") @db.VarChar(255)
@@ -362,15 +405,23 @@ model Ride {
   // Relations
   company         Company      @relation(fields: [companyId], references: [id])
   driver          User         @relation("RideDriver", fields: [driverId], references: [id])
+  workplace       Workplace    @relation(fields: [workplaceId], references: [id])
   requests        RideRequest[]
   reviews         Review[]
   settlements     Settlement[]
   chatRoom        ChatRoom?
 
   @@index([companyId, status, departureTime])
+  @@index([companyId, workplaceId, status, departureTime])
+  @@index([companyId, departureLat, departureLng])
   @@index([companyId, departureTime])
   @@index([driverId, departureTime])
   @@map("rides")
+}
+
+enum PickupPrivacy {
+  APPROXIMATE   // 승인 전 표시용 동네명/대략 위치만 노출
+  APPROVED_ONLY // 승인 후 상세 만남 위치 공유
 }
 
 enum RideStatus {
@@ -632,9 +683,12 @@ enum MessageType {
 | id | UUID | PK | 운행 ID |
 | **company_id** | **UUID** | **FK → companies, NOT NULL** | **소속 회사/도메인 (격리 키)** |
 | driver_id | UUID | FK → users | 차주 |
+| workplace_id | UUID | FK → workplaces, NOT NULL | 회사 근무지 목적지 |
+| pickup_label | VARCHAR(100) | NOT NULL | 승인 전 표시할 동네/랜드마크 기반 출발 위치명 |
+| pickup_privacy | ENUM | DEFAULT APPROXIMATE | 승인 전/후 출발 위치 공개 정책 |
 | departure_lat | DECIMAL(10,7) | NOT NULL | 출발지 위도 |
 | departure_lng | DECIMAL(10,7) | NOT NULL | 출발지 경도 |
-| departure_addr | VARCHAR(255) | | 출발지 주소 |
+| departure_addr | VARCHAR(255) | | 내부/승인 후 공유용 출발지 주소. 승인 전 그대로 노출 금지 |
 | arrival_lat | DECIMAL(10,7) | NOT NULL | 도착지 위도 |
 | arrival_lng | DECIMAL(10,7) | NOT NULL | 도착지 경도 |
 | arrival_addr | VARCHAR(255) | | 도착지 주소 |
@@ -650,6 +704,8 @@ enum MessageType {
 
 **인덱스**:
 - `(company_id, status, departure_time)`: 같은 기업의 오픈 운행 검색 및 출발 시각 정렬
+- `(company_id, workplace_id, status, departure_time)`: 회사 근무지별 출근 카풀 조회
+- `(company_id, departure_lat, departure_lng)`: 지도 기반 주변 출발 위치 조회 후보
 - `(company_id, departure_time)`: 기업별 기간 조회/통계
 - `(driver_id, departure_time)`: 차주별 운행 이력
 

@@ -2,7 +2,14 @@
 
 ## 개요
 
-출발지/도착지/시간 기반 카풀 매칭. **같은 회사 이메일 도메인 구성원끼리만** 매칭 가능.
+동네 출발지에서 회사 근무지로 이동하는 출근 카풀 매칭. **같은 회사 이메일 도메인 구성원끼리만** 매칭 가능하며, MVP에서는 퇴근 카풀·임의 목적지·직장 외 목적지 검색을 지원하지 않는다.
+
+핵심 흐름:
+
+1. 차주가 지도에서 출발 위치를 등록한다.
+2. 도착지는 회사 근무지(`Workplace`)로 제한한다.
+3. 탑승자는 내 동네/현재 위치 주변 지도 marker에서 카풀 제공자를 선택한다.
+4. 승인 전에는 정확한 집 주소를 노출하지 않고 표시용 동네명과 대략 위치만 반환한다.
 
 ---
 
@@ -13,6 +20,9 @@ type Ride {
   id: ID!
   driver: User!
   companyId: String!
+  workplace: Workplace!
+  pickupLabel: String!
+  pickupPrivacy: PickupPrivacy!
   departureLat: Float!
   departureLng: Float!
   departureAddr: String
@@ -29,6 +39,20 @@ type Ride {
   createdAt: String!
   updatedAt: String!
   rideRequests: [RideRequest!]!
+}
+
+type Workplace {
+  id: ID!
+  companyId: String!
+  name: String!
+  lat: Float!
+  lng: Float!
+  address: String!
+}
+
+enum PickupPrivacy {
+  APPROXIMATE
+  APPROVED_ONLY
 }
 
 enum RideStatus {
@@ -58,18 +82,27 @@ type RideRequest {
 }
 
 input CreateRideInput {
+  workplaceId: ID!
   departureLat: Float!
   departureLng: Float!
+  pickupLabel: String!
   departureAddr: String
-  arrivalLat: Float!
-  arrivalLng: Float!
-  arrivalAddr: String
   departureTime: String!
   availableSeats: Int!
   fare: Int
   recurringDays: String
   recurringEnd: String
   preferences: String
+}
+
+input NearbyCommuteOffersInput {
+  lat: Float!
+  lng: Float!
+  radiusKm: Float = 3.0
+  workplaceId: ID
+  departureTimeFrom: String
+  departureTimeTo: String
+  passengers: Int = 1
 }
 
 input SearchRidesInput {
@@ -94,6 +127,8 @@ type SearchRidesResult {
 }
 
 type Query {
+  workplaces: [Workplace!]!
+  nearbyCommuteOffers(input: NearbyCommuteOffersInput!): SearchRidesResult!
   searchRides(input: SearchRidesInput!): SearchRidesResult!
   rideDetail(id: ID!): Ride!
   myRides(status: RideStatus): [Ride!]!
@@ -117,15 +152,16 @@ type Mutation {
 
 ### 설명
 
-차주가 카풀을 등록. 자동으로 본인의 companyId가 설정됨.
+차주가 동네 출발 위치와 회사 근무지 목적지를 등록한다. 자동으로 본인의 `companyId`가 설정되며, `workplaceId`는 같은 회사의 근무지만 허용한다. `departureAddr`는 차주 내부 관리용이며 승인 전 탑승자에게 그대로 노출하지 않는다.
 
 ### 정상 케이스
 
 | # | 케이스 | 입력 | 기대 결과 |
 |---|--------|------|-----------|
-| A1 | 일반 카풀 | 출발/도착/시간/좌석 | Ride 생성, status=OPEN |
+| A1 | 회사행 출근 카풀 | 출발 위치/근무지/시간/좌석 | Ride 생성, status=OPEN |
 | A2 | 정기 카풀 | recurringDays="월,화,수,목,금" | 정기 카풀로 등록 |
 | A3 | 선호도 설정 | preferences="{noSmoking:true, petAllowed:false}" | preferences JSON 저장 |
+| A4 | 표시용 동네명 | pickupLabel="성수동 인근" | 지도/카드에는 표시용 동네명 노출 |
 
 ### 예외 케이스
 
@@ -133,9 +169,11 @@ type Mutation {
 |---|--------|------|-----------|
 | E1 | 좌석 0 | availableSeats=0 | `BAD_REQUEST: 좌석 수는 1 이상이어야 합니다` |
 | E2 | 과거 시간 | departureTime=어제 | `BAD_REQUEST: 출발 시간은 현재 이후여야 합니다` |
-| E3 | 출발지=도착지 | 같은 좌표 | `BAD_REQUEST: 출발지와 도착지가 달라야 합니다` |
+| E3 | 출발지=근무지 | 같은 좌표 | `BAD_REQUEST: 출발 위치와 근무지가 달라야 합니다` |
 | E4 | 중복 등록 | 같은 시간대 이미 등록한 카풀 | `CONFLICT: 해당 시간에 이미 등록한 카풀이 있습니다` |
 | E5 | 비차주 | role=passenger | `FORBIDDEN: 차주만 카풀을 등록할 수 있습니다` |
+| E6 | 타회사 근무지 | 다른 companyId의 workplaceId | `FORBIDDEN: 같은 회사 근무지만 선택할 수 있습니다` |
+| E7 | 출근 방향 아님 | 회사 근무지 외 도착지 직접 입력 | `BAD_REQUEST: MVP는 동네에서 회사로 이동하는 카풀만 지원합니다` |
 
 ### 엣지 케이스
 
@@ -145,19 +183,20 @@ type Mutation {
 
 ---
 
-## 기능: 카풀 검색 (`searchRides`)
+## 기능: 지도 기반 주변 카풀 조회 (`nearbyCommuteOffers`)
 
 ### 설명
 
-탑승자가 출발지/도착지/시간으로 카풀 검색. **같은 회사 사원의 카풀만** 결과에 노출.
+탑승자가 내 위치 또는 선택한 동네 중심 좌표로 주변 회사행 카풀을 조회한다. **같은 회사 사원의 OPEN 카풀만** 결과에 노출하며, 승인 전 정확한 집 주소를 반환하지 않는다.
 
 ### 정상 케이스
 
 | # | 케이스 | 입력 | 기대 결과 |
 |---|--------|------|-----------|
-| A1 | 기본 검색 | 강남→수원, 오늘 08:00 | 같은 회사 사원의 카풀만 반환 |
+| A1 | 기본 지도 조회 | 성수동 중심 좌표, 오늘 08:00~09:00 | 같은 회사 사원의 회사행 카풀 marker 반환 |
 | A2 | 반경 검색 | radiusKm=3.0 | 3km 이내 카풀만 |
 | A3 | 다인 검색 | passengers=2 | 2석 이상 남은 카풀만 |
+| A4 | 근무지 필터 | workplaceId 지정 | 해당 회사 근무지로 향하는 카풀만 반환 |
 
 ### 예외 케이스
 
@@ -166,6 +205,7 @@ type Mutation {
 | E1 | 타회사 카풀 | 다른 companyId 카풀 존재 | 검색 결과에 미포함 |
 | E2 | passengers 0 | passengers=0 | `BAD_REQUEST` |
 | E3 | 과거 시간 | departureTime=어제 | `BAD_REQUEST` |
+| E4 | 반경 과다 | radiusKm > 10 | `BAD_REQUEST: 조회 반경이 너무 큽니다` |
 
 ### 엣지 케이스
 
@@ -174,6 +214,7 @@ type Mutation {
 | X1 | 검색 결과 없음 | 조건에 맞는 카풀이 없음 | `{ rides: [], totalCount: 0 }` |
 | X2 | 만석 카풀 | 모든 좌석이 찬 카풀 | 검색 결과에서 제외 |
 | X3 | 본인 카풀 | 자기가 등록한 카풀 | 검색 결과에서 제외 |
+| X4 | 같은 위치 다수 | 같은 동네 marker 밀집 | 클라이언트가 cluster 처리할 수 있도록 좌표/개수 제공 |
 
 ---
 
@@ -181,7 +222,7 @@ type Mutation {
 
 ### 설명
 
-탑승자가 카풀에 탑승 요청. 같은 회사 사원만 요청 가능.
+탑승자가 지도 marker 또는 목록 카드에서 선택한 회사행 카풀에 탑승 요청한다. 같은 회사 사원만 요청 가능하며, 요청 시 입력한 픽업 메모는 차주에게 전달한다.
 
 ### 정상 케이스
 
@@ -199,6 +240,7 @@ type Mutation {
 | E3 | 중복 요청 | 이미 요청한 카풀 | `CONFLICT: 이미 요청한 카풀입니다` |
 | E4 | 본인 카풀 | 자기가 등록한 카풀 | `BAD_REQUEST: 본인 카풀에는 요청할 수 없습니다` |
 | E5 | 취소된 카풀 | status=CANCELLED | `BAD_REQUEST: 취소된 카풀입니다` |
+| E6 | 회사행 카풀 아님 | legacy/잘못된 목적지 데이터 | `BAD_REQUEST: 회사행 카풀만 요청할 수 있습니다` |
 
 ### 엣지 케이스
 
