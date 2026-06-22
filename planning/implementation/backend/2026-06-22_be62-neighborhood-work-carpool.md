@@ -42,17 +42,17 @@
 
 | Case ID | A/E/X 링크 | 구현 파일/단위 | 테스트 파일/테스트명 | 완료 기준 |
 |---|---|---|---|---|
-| BE-NW-001 | A-BE-NW-001, E-BE-NW-001 | `prisma/schema.prisma`, migration — `Workplace`, `Ride.workplaceId/pickupLabel/pickupPrivacy` | `test/prisma-schema.spec.ts` 또는 migration validation — `동네 회사행 카풀 스키마가 유효하다` | `npx prisma validate`, `npx prisma generate` 통과 |
-| BE-NW-002 | A-BE-NW-001, E-BE-NW-001, E-BE-NW-003 | `src/graphql/schema.graphql`, matching resolver/service — `createRide` 회사 근무지 제약 | `test/matching/create-ride.e2e-spec.ts` — `차주가 같은 회사 근무지로 동네 출발 카풀을 생성한다` | 타회사 근무지/임의 목적지 차단 |
-| BE-NW-003 | A-BE-NW-002, E-BE-NW-002, X-BE-NW-001 | matching resolver/service — `nearbyCommuteOffers` | `test/matching/nearby-commute-offers.e2e-spec.ts` — `탑승자가 주변 회사행 카풀을 조회한다` | 회사/반경/시간/좌석 필터 적용 |
-| BE-NW-004 | A-BE-NW-003, X-BE-NW-002 | matching resolver/service — `requestRide` privacy-safe request flow | `test/matching/request-ride.e2e-spec.ts` — `탑승자가 지도 선택 offer에 요청한다` | 중복/만석/본인 offer 차단, 승인 전 주소 비노출 |
+| BE-NW-001 | A-BE-NW-001, E-BE-NW-001 | `prisma/schema.prisma`, `prisma/migrations/20260622000000_neighborhood_work_carpool/migration.sql` — `Workplace`, `Ride.workplaceId/pickupLabel/pickupPrivacy` | `src/prisma-schema.spec.ts` — `동네 회사행 카풀 Prisma 스키마가 docs 계약과 일치한다`; `npx prisma validate`; `npx prisma generate` | DB 스키마와 migration validation 통과 |
+| BE-NW-002 | A-BE-NW-001, E-BE-NW-001, E-BE-NW-003 | `src/graphql/schema.graphql`, `src/services/matching/matching.resolver.ts`, `src/services/matching/matching.service.ts` — `createRide` 회사 근무지 제약 | `src/graphql-schema.spec.ts` — `카풀 생성/수정 입력은 임의 목적지를 받지 않는다`; `src/services/matching/matching.service.spec.ts` — `차주가 카풀을 생성한다`, `다른 회사 근무지로 카풀을 생성할 수 없다`; `test/matching.e2e-spec.ts` — `차주 토큰으로 카풀을 생성한다` | 타회사 근무지/임의 목적지 차단 |
+| BE-NW-003 | A-BE-NW-002, E-BE-NW-002, X-BE-NW-001 | `src/services/matching/matching.resolver.ts`, `src/services/matching/matching.service.ts` — `nearbyCommuteOffers` | `src/services/matching/matching.service.spec.ts` — `탑승자가 주변 회사행 카풀을 조회한다`; `test/matching.e2e-spec.ts` — `탑승자가 주변 회사행 카풀을 조회한다` | 회사/반경/시간/좌석 필터 적용 |
+| BE-NW-004 | A-BE-NW-003, X-BE-NW-002 | `src/services/matching/matching.service.ts`, `src/services/chat/chat.service.ts`, `src/services/payment/payment.service.ts`, `src/services/review/review.service.ts` — privacy-safe request flow | `src/services/matching/matching.service.spec.ts` — `승인 전에는 정확한 출발 주소를 노출하지 않는다`, `승인된 APPROVED_ONLY 요청은 정확한 출발 주소를 보여준다`; `test/matching.e2e-spec.ts` — `탑승 요청을 만들고 차주가 수락한다`; chat/payment/review privacy specs | 중복/만석/본인 offer 차단, 승인 전 주소 비노출 |
 
 ## 수정/생성할 파일 경로
 
 - `backend/prisma/schema.prisma`
 - `backend/src/graphql/schema.graphql`
-- `backend/src/matching/*`
-- `backend/test/matching/*`
+- `backend/src/services/matching/*`
+- `backend/test/matching.e2e-spec.ts`
 
 ## TDD 순서
 
