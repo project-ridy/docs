@@ -168,7 +168,7 @@ type Mutation {
 | E2 | 과거 시간 | departureTime=어제 | `BAD_REQUEST: 출발 시간은 미래여야 합니다` |
 | E3 | 출발지=근무지 | 같은 좌표 | `BAD_REQUEST: 출발 위치와 근무지는 달라야 합니다` |
 | E4 | 중복 등록 | 같은 시간대 이미 등록한 카풀 | `CONFLICT: 같은 시간대에 이미 등록한 카풀이 있습니다` |
-| E5 | 비차주 | role=passenger | `FORBIDDEN: 차주만 카풀을 등록할 수 있습니다` |
+| E5 | 비차주 | role=passenger | `FORBIDDEN: 차주만 카풀을 생성할 수 있습니다` |
 | E6 | 타회사 근무지 | 다른 companyId의 workplaceId | `FORBIDDEN: 같은 회사 근무지만 선택할 수 있습니다` |
 | E7 | 출근 방향 아님 | 회사 근무지 외 도착지 직접 입력 | GraphQL validation 실패 또는 `BAD_REQUEST: 회사행 카풀에만 요청할 수 있습니다` |
 
@@ -233,9 +233,9 @@ type Mutation {
 | # | 케이스 | 기대 결과 |
 |---|--------|-----------|
 | E1 | 타회사 카풀 | 다른 회사 카풀에 요청 | `NOT_FOUND: 카풀을 찾을 수 없습니다` |
-| E2 | 만석 | availableSeats=0 | `BAD_REQUEST: 좌석이 모두 찼습니다` |
+| E2 | 만석 | availableSeats=0 | `BAD_REQUEST: 남은 좌석이 없습니다` |
 | E3 | 중복 요청 | 이미 요청한 카풀 | `CONFLICT: 이미 요청한 카풀입니다` |
-| E4 | 본인 카풀 | 자기가 등록한 카풀 | `BAD_REQUEST: 본인 카풀에는 요청할 수 없습니다` |
+| E4 | 본인 카풀 | 자기가 등록한 카풀 | `BAD_REQUEST: 본인이 만든 카풀에는 요청할 수 없습니다` |
 | E5 | 취소된 카풀 | status=CANCELLED | `BAD_REQUEST: 요청할 수 없는 카풀입니다` |
 | E6 | 회사행 카풀 아님 | legacy/잘못된 목적지 데이터 | `BAD_REQUEST: 회사행 카풀에만 요청할 수 있습니다` |
 
@@ -266,7 +266,7 @@ type Mutation {
 |---|--------|-----------|
 | E1 | 본인 아닌 카풀 | 다른 차주의 카풀 | `FORBIDDEN` |
 | E2 | 이미 처리됨 | status=ACCEPTED/REJECTED | `BAD_REQUEST: 이미 처리된 요청입니다` |
-| E3 | 수락 시 만석 | availableSeats=0 | `BAD_REQUEST: 좌석이 모두 찼습니다` |
+| E3 | 수락 시 만석 | availableSeats=0 | `BAD_REQUEST: 남은 좌석이 없습니다` |
 
 ---
 
