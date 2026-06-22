@@ -20,8 +20,8 @@
 ## 아키텍처 접근
 
 1. GraphQL operation을 먼저 작성하고 codegen 타입을 사용합니다.
-2. 지도 SDK는 별도 라이선스/키 정책 문서화 전까지 BLOCKED입니다. MVP 구현은 native placeholder/map panel + marker list로 시작합니다.
-3. Home은 `nearbyCommuteOffers` 결과를 지도 panel과 bottom sheet/list로 표현합니다.
+2. 지도 구현은 Kakao Maps JavaScript API를 사용합니다. 클라이언트 키는 `NEXT_PUBLIC_KAKAO_MAP_APP_KEY`로 주입하고, 키가 없거나 SDK 로드가 실패하면 테스트 가능한 목록 fallback을 표시합니다.
+3. Home은 `nearbyCommuteOffers` 결과를 Kakao 지도 marker와 bottom sheet/list로 표현합니다.
 4. Driver 화면은 출발 위치 좌표/표시명/근무지/시간/좌석을 입력하는 등록 폼을 제공합니다.
 5. 승인 전 정확 주소를 보여주지 않고 `pickupLabel`만 카드/상세에 표시합니다.
 
@@ -42,7 +42,7 @@
 | Case ID | A/E/X 링크 | 구현 파일/단위 | 테스트 파일/테스트명 | 완료 기준 |
 |---|---|---|---|---|
 | FE-NW-001 | A-FE-NW-001, E-FE-NW-001, E-FE-NW-002 | `src/graphql/operations/matching.graphql`, generated types | `__tests__/graphqlOperations.test.ts` — `nearbyCommuteOffers operation이 정의된다` | codegen 통과, 손작성 타입 없음 |
-| FE-NW-002 | A-FE-NW-001, X-FE-NW-001 | `app/page.tsx`, map/list components — 주변 회사행 카풀 지도 panel | `__tests__/Home.test.tsx` — `홈에서 동네 주변 회사행 카풀을 지도와 카드로 표시한다` | marker/list/empty state 렌더링 |
+| FE-NW-002 | A-FE-NW-001, X-FE-NW-001 | `app/page.tsx`, Kakao map/list components — 주변 회사행 카풀 지도 panel | `__tests__/Home.test.tsx` — `홈에서 동네 주변 회사행 카풀을 지도와 카드로 표시한다` | Kakao marker/list/empty/fallback state 렌더링 |
 | FE-NW-003 | A-FE-NW-002, X-FE-NW-002 | `app/matchings/*` — pickupLabel 중심 카드/상세 | `__tests__/Matchings.test.tsx` — `승인 전 정확 주소 대신 표시용 동네명을 보여준다` | 정확 주소 미노출 |
 | FE-NW-004 | A-FE-NW-003 | `app/driver/page.tsx` 또는 driver form component — 출발 위치 등록 폼 | `__tests__/DriverHome.test.tsx` — `차주가 지도 출발 위치와 회사 근무지로 카풀을 등록한다` | createRide variables가 docs와 일치 |
 | FE-NW-005 | X-FE-NW-001, X-FE-NW-002 | Visual smoke evidence | PR screenshots + `npm run test/lint/build` | mobile 지도/카드/등록 화면 확인 |
@@ -54,6 +54,7 @@
 - `frontend/app/matchings/page.tsx`
 - `frontend/app/matchings/[id]/page.tsx`
 - `frontend/app/driver/page.tsx` 또는 관련 component
+- `frontend/lib/kakao-map.ts` 또는 관련 Kakao Maps SDK loader
 - `frontend/__tests__/Home.test.tsx`
 - `frontend/__tests__/Matchings.test.tsx`
 - `frontend/__tests__/DriverHome.test.tsx`
@@ -61,7 +62,7 @@
 ## TDD 순서
 
 1. FE-NW-001: GraphQL operation test/codegen Red → operation 추가 Green
-2. FE-NW-002: Home 지도 panel test Red → placeholder map/list Green
+2. FE-NW-002: Home Kakao 지도 panel test Red → Kakao marker/list/fallback Green
 3. FE-NW-003: matching privacy display test Red → pickupLabel 중심 표시 Green
 4. FE-NW-004: driver registration form test Red → createRide form Green
 5. FE-NW-005: visual smoke + full verification
@@ -77,7 +78,7 @@ npm run build
 
 ## 완료 조건
 
-- 지도 SDK 없이도 fallback UI로 동네 기반 탐색 흐름이 동작합니다.
+- Kakao Maps API로 동네 기반 탐색 흐름이 동작하고, 키 미설정/SDK 로드 실패 시 목록 fallback이 동작합니다.
 - 승인 전 정확 주소를 표시하지 않습니다.
 - 모든 Case ID가 구현/테스트에 연결됩니다.
 - PR 본문에 Case ID 확인표와 visual evidence를 포함합니다.
