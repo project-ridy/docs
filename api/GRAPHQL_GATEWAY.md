@@ -241,6 +241,11 @@ enum RequestStatus {
   CANCELLED
 }
 
+enum PickupPrivacy {
+  APPROXIMATE
+  APPROVED_ONLY
+}
+
 type LatLng {
   lat: Float!
   lng: Float!
@@ -251,10 +256,25 @@ input LatLngInput {
   lng: Float!
 }
 
+type Workplace {
+  id: ID!
+  companyId: ID!
+  name: String!
+  lat: Float!
+  lng: Float!
+  address: String!
+  isDefault: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
 type Ride {
   id: ID!
   companyId: ID!
   driver: User!
+  workplace: Workplace!
+  pickupLabel: String!
+  pickupPrivacy: PickupPrivacy!
   departure: LatLng!
   departureAddr: String
   arrival: LatLng!
@@ -282,14 +302,25 @@ type RideRequest {
 }
 
 input CreateRideInput {
+  workplaceId: ID!
   departure: LatLngInput!
   departureAddr: String
-  arrival: LatLngInput!
-  arrivalAddr: String
+  pickupLabel: String!
+  pickupPrivacy: PickupPrivacy = APPROXIMATE
   departureTime: DateTime!
   availableSeats: Int!
   fare: Int
   preferences: JSON
+}
+
+input NearbyCommuteOffersInput {
+  lat: Float!
+  lng: Float!
+  radiusKm: Float = 3.0
+  workplaceId: ID
+  departureTimeFrom: DateTime
+  departureTimeTo: DateTime
+  passengers: Int = 1
 }
 
 input SearchRidesInput {
@@ -314,6 +345,8 @@ type RideConnection {
 }
 
 extend type Query {
+  workplaces: [Workplace!]! @auth @companyScope
+  nearbyCommuteOffers(input: NearbyCommuteOffersInput!, pagination: PaginationInput): RideConnection! @auth @companyScope
   searchRides(input: SearchRidesInput!, pagination: PaginationInput): RideConnection! @auth @companyScope
   ride(id: ID!): Ride! @auth @companyScope
   myRides(status: RideStatus, pagination: PaginationInput): RideConnection! @auth @companyScope

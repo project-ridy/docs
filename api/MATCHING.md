@@ -19,35 +19,34 @@
 type Ride {
   id: ID!
   driver: User!
-  companyId: String!
+  companyId: ID!
   workplace: Workplace!
   pickupLabel: String!
   pickupPrivacy: PickupPrivacy!
-  departureLat: Float!
-  departureLng: Float!
+  departure: LatLng!
   departureAddr: String
-  arrivalLat: Float!
-  arrivalLng: Float!
+  arrival: LatLng!
   arrivalAddr: String
-  departureTime: String!
+  departureTime: DateTime!
   availableSeats: Int!
   fare: Int
-  recurringDays: String
-  recurringEnd: String
-  preferences: String  # JSON
+  preferences: JSON
   status: RideStatus!
-  createdAt: String!
-  updatedAt: String!
-  rideRequests: [RideRequest!]!
+  requests: [RideRequest!]!
+  createdAt: DateTime!
+  updatedAt: DateTime!
 }
 
 type Workplace {
   id: ID!
-  companyId: String!
+  companyId: ID!
   name: String!
   lat: Float!
   lng: Float!
   address: String!
+  isDefault: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
 }
 
 enum PickupPrivacy {
@@ -74,25 +73,24 @@ type RideRequest {
   id: ID!
   ride: Ride!
   passenger: User!
+  pickup: LatLng
   pickupAddr: String
   message: String
   status: RequestStatus!
-  createdAt: String!
-  updatedAt: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
 }
 
 input CreateRideInput {
   workplaceId: ID!
-  departureLat: Float!
-  departureLng: Float!
-  pickupLabel: String!
+  departure: LatLngInput!
   departureAddr: String
-  departureTime: String!
+  pickupLabel: String!
+  pickupPrivacy: PickupPrivacy = APPROXIMATE
+  departureTime: DateTime!
   availableSeats: Int!
   fare: Int
-  recurringDays: String
-  recurringEnd: String
-  preferences: String
+  preferences: JSON
 }
 
 input NearbyCommuteOffersInput {
@@ -100,39 +98,39 @@ input NearbyCommuteOffersInput {
   lng: Float!
   radiusKm: Float = 3.0
   workplaceId: ID
-  departureTimeFrom: String
-  departureTimeTo: String
+  departureTimeFrom: DateTime
+  departureTimeTo: DateTime
   passengers: Int = 1
 }
 
 input SearchRidesInput {
-  departureLat: Float!
-  departureLng: Float!
-  arrivalLat: Float!
-  arrivalLng: Float!
-  departureTime: String!
+  departure: LatLngInput!
+  arrival: LatLngInput!
+  departureTime: DateTime!
   passengers: Int = 1
   radiusKm: Float = 5.0
 }
 
 input RequestRideInput {
   rideId: ID!
+  pickup: LatLngInput
   pickupAddr: String
   message: String
 }
 
-type SearchRidesResult {
-  rides: [Ride!]!
+type RideConnection {
+  nodes: [Ride!]!
+  pageInfo: PageInfo!
   totalCount: Int!
 }
 
 type Query {
   workplaces: [Workplace!]!
-  nearbyCommuteOffers(input: NearbyCommuteOffersInput!): SearchRidesResult!
-  searchRides(input: SearchRidesInput!): SearchRidesResult!
-  rideDetail(id: ID!): Ride!
-  myRides(status: RideStatus): [Ride!]!
-  myRequests(status: RequestStatus): [RideRequest!]!
+  nearbyCommuteOffers(input: NearbyCommuteOffersInput!, pagination: PaginationInput): RideConnection!
+  searchRides(input: SearchRidesInput!, pagination: PaginationInput): RideConnection!
+  ride(id: ID!): Ride!
+  myRides(status: RideStatus, pagination: PaginationInput): RideConnection!
+  myRideRequests(status: RequestStatus, pagination: PaginationInput): [RideRequest!]!
 }
 
 type Mutation {
@@ -140,9 +138,9 @@ type Mutation {
   updateRide(id: ID!, input: CreateRideInput!): Ride!
   cancelRide(id: ID!): Ride!
   requestRide(input: RequestRideInput!): RideRequest!
-  acceptRequest(id: ID!): RideRequest!
-  rejectRequest(id: ID!): RideRequest!
-  cancelRequest(id: ID!): RideRequest!
+  acceptRideRequest(id: ID!): RideRequest!
+  rejectRideRequest(id: ID!): RideRequest!
+  cancelRideRequest(id: ID!): RideRequest!
 }
 ```
 
@@ -159,21 +157,20 @@ type Mutation {
 | # | 케이스 | 입력 | 기대 결과 |
 |---|--------|------|-----------|
 | A1 | 회사행 출근 카풀 | 출발 위치/근무지/시간/좌석 | Ride 생성, status=OPEN |
-| A2 | 정기 카풀 | recurringDays="월,화,수,목,금" | 정기 카풀로 등록 |
-| A3 | 선호도 설정 | preferences="{noSmoking:true, petAllowed:false}" | preferences JSON 저장 |
-| A4 | 표시용 동네명 | pickupLabel="성수동 인근" | 지도/카드에는 표시용 동네명 노출 |
+| A2 | 선호도 설정 | preferences={noSmoking:true, petAllowed:false} | preferences JSON 저장 |
+| A3 | 표시용 동네명 | pickupLabel="성수동 인근" | 지도/카드에는 표시용 동네명 노출 |
 
 ### 예외 케이스
 
 | # | 케이스 | 입력 | 기대 결과 |
 |---|--------|------|-----------|
-| E1 | 좌석 0 | availableSeats=0 | `BAD_REQUEST: 좌석 수는 1 이상이어야 합니다` |
-| E2 | 과거 시간 | departureTime=어제 | `BAD_REQUEST: 출발 시간은 현재 이후여야 합니다` |
-| E3 | 출발지=근무지 | 같은 좌표 | `BAD_REQUEST: 출발 위치와 근무지가 달라야 합니다` |
-| E4 | 중복 등록 | 같은 시간대 이미 등록한 카풀 | `CONFLICT: 해당 시간에 이미 등록한 카풀이 있습니다` |
-| E5 | 비차주 | role=passenger | `FORBIDDEN: 차주만 카풀을 등록할 수 있습니다` |
+| E1 | 좌석 0 | availableSeats=0 | `BAD_REQUEST: 좌석은 1개 이상이어야 합니다` |
+| E2 | 과거 시간 | departureTime=어제 | `BAD_REQUEST: 출발 시간은 미래여야 합니다` |
+| E3 | 출발지=근무지 | 같은 좌표 | `BAD_REQUEST: 출발 위치와 근무지는 달라야 합니다` |
+| E4 | 중복 등록 | 같은 시간대 이미 등록한 카풀 | `CONFLICT: 같은 시간대에 이미 등록한 카풀이 있습니다` |
+| E5 | 비차주 | role=passenger | `FORBIDDEN: 차주만 카풀을 생성할 수 있습니다` |
 | E6 | 타회사 근무지 | 다른 companyId의 workplaceId | `FORBIDDEN: 같은 회사 근무지만 선택할 수 있습니다` |
-| E7 | 출근 방향 아님 | 회사 근무지 외 도착지 직접 입력 | `BAD_REQUEST: MVP는 동네에서 회사로 이동하는 카풀만 지원합니다` |
+| E7 | 출근 방향 아님 | 회사 근무지 외 도착지 직접 입력 | GraphQL validation 실패 또는 `BAD_REQUEST: 회사행 카풀에만 요청할 수 있습니다` |
 
 ### 엣지 케이스
 
@@ -211,7 +208,7 @@ type Mutation {
 
 | # | 케이스 | 설명 | 기대 결과 |
 |---|--------|------|-----------|
-| X1 | 검색 결과 없음 | 조건에 맞는 카풀이 없음 | `{ rides: [], totalCount: 0 }` |
+| X1 | 검색 결과 없음 | 조건에 맞는 카풀이 없음 | `{ nodes: [], totalCount: 0 }` |
 | X2 | 만석 카풀 | 모든 좌석이 찬 카풀 | 검색 결과에서 제외 |
 | X3 | 본인 카풀 | 자기가 등록한 카풀 | 검색 결과에서 제외 |
 | X4 | 같은 위치 다수 | 같은 동네 marker 밀집 | 클라이언트가 cluster 처리할 수 있도록 좌표/개수 제공 |
@@ -235,12 +232,12 @@ type Mutation {
 
 | # | 케이스 | 기대 결과 |
 |---|--------|-----------|
-| E1 | 타회사 카풀 | 다른 회사 카풀에 요청 | `FORBIDDEN: 같은 회사 사원만 요청할 수 있습니다` |
-| E2 | 만석 | availableSeats=0 | `BAD_REQUEST: 좌석이 모두 찼습니다` |
+| E1 | 타회사 카풀 | 다른 회사 카풀에 요청 | `NOT_FOUND: 카풀을 찾을 수 없습니다` |
+| E2 | 만석 | availableSeats=0 | `BAD_REQUEST: 남은 좌석이 없습니다` |
 | E3 | 중복 요청 | 이미 요청한 카풀 | `CONFLICT: 이미 요청한 카풀입니다` |
-| E4 | 본인 카풀 | 자기가 등록한 카풀 | `BAD_REQUEST: 본인 카풀에는 요청할 수 없습니다` |
-| E5 | 취소된 카풀 | status=CANCELLED | `BAD_REQUEST: 취소된 카풀입니다` |
-| E6 | 회사행 카풀 아님 | legacy/잘못된 목적지 데이터 | `BAD_REQUEST: 회사행 카풀만 요청할 수 있습니다` |
+| E4 | 본인 카풀 | 자기가 등록한 카풀 | `BAD_REQUEST: 본인이 만든 카풀에는 요청할 수 없습니다` |
+| E5 | 취소된 카풀 | status=CANCELLED | `BAD_REQUEST: 요청할 수 없는 카풀입니다` |
+| E6 | 회사행 카풀 아님 | legacy/잘못된 목적지 데이터 | `BAD_REQUEST: 회사행 카풀에만 요청할 수 있습니다` |
 
 ### 엣지 케이스
 
@@ -250,7 +247,7 @@ type Mutation {
 
 ---
 
-## 기능: 요청 수락/거절 (`acceptRequest` / `rejectRequest`)
+## 기능: 요청 수락/거절 (`acceptRideRequest` / `rejectRideRequest`)
 
 ### 설명
 
@@ -269,7 +266,7 @@ type Mutation {
 |---|--------|-----------|
 | E1 | 본인 아닌 카풀 | 다른 차주의 카풀 | `FORBIDDEN` |
 | E2 | 이미 처리됨 | status=ACCEPTED/REJECTED | `BAD_REQUEST: 이미 처리된 요청입니다` |
-| E3 | 수락 시 만석 | availableSeats=0 | `BAD_REQUEST: 좌석이 모두 찼습니다` |
+| E3 | 수락 시 만석 | availableSeats=0 | `BAD_REQUEST: 남은 좌석이 없습니다` |
 
 ---
 
