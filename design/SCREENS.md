@@ -8,9 +8,9 @@
 | S01 | 스플래시 | / | 앱 로딩, 브랜드 노출 |
 | S02 | 로그인/가입 | /login | 가입 코드, 회사 이메일 인증코드, 비밀번호 로그인 |
 | S03 | 프로필 설정 | /profile/setup | 신규 유저 정보 입력 |
-| S04 | 홈·검색 (탑승자) | / | 검색 입력과 내 동네 주변 회사행 카풀 지도 탐색 |
+| S04 | 홈 (탑승자) | / | 집 주변 회사행 카풀 지도 탐색과 선택 |
 | S05 | 홈 (차주) | /driver | 동네 출발 위치 등록, 요청 관리 |
-| S06 | 매칭 검색 결과 | /matchings | 홈 통합 검색 결과의 공유/딥링크 호환 경로 |
+| S06 | 주변 카풀 목록 | /matchings | 집 주변 카풀 목록/지도 딥링크 호환 경로 |
 | S07 | 매칭 상세 | /matchings/:id | 프로필, 경로, 요청 |
 | S08 | 채팅 목록 | /chat | 채팅방 리스트 |
 | S09 | 채팅방 | /chat/:id | 실시간 메시지 |
@@ -27,9 +27,9 @@ S02 로그인
   ↓ (가입 코드 + 회사 이메일 인증코드 + 비밀번호 설정)
 S03 프로필 설정
   ↓
-S04 홈·검색 (탑승자) ←→ S05 홈 (차주)
-  ↓                         ↓
-S06 매칭 결과(딥링크)   매칭 요청 관리
+S04 홈 (탑승자) ←→ S05 홈 (차주)
+  ↓                    ↓
+S06 주변 카풀 목록   매칭 요청 관리
   ↓
 S07 매칭 상세
   ↓ (수락 후)
@@ -61,11 +61,10 @@ S10 정산 현황
 - **하단 CTA**: 로그인/시작 유도와 푸터
 - **SEO**: title, description, OG metadata 제공
 
-### S04 홈·검색 (탑승자)
-- **상단 검색**: 기존 로고 중심 상단 바 대신 동네/목적지/시간을 입력하는 검색 입력을 고정 표시합니다.
-- **지도 탐색**: 검색 조건 또는 내 동네/현재 위치 중심으로 주변 회사행 카풀 marker를 표시합니다.
+### S04 홈 (탑승자)
+- **주변 카풀 탐색**: 집/동네 또는 현재 위치 중심으로 주변 회사행 카풀 marker와 카드를 표시합니다.
 - **빈 상태**: 주변 등록 카풀 없음 → "동네를 넓혀 다시 찾아보세요"
-- **카풀 선택**: marker 또는 bottom sheet 카드 선택 후 상세/요청으로 이동
+- **카풀 선택**: marker 또는 bottom sheet 카드 선택 후 회사까지 가는 S07 상세/요청으로 이동
 - **알림**: 매칭 요청 수락/거절 푸시
 - **하단 탭**: 홈, 기록, 채팅, 프로필 순서로 표시합니다. `기록`은 사용자의 지난/예정 운행 기록 또는 정산 기록 진입점입니다.
 
@@ -142,18 +141,17 @@ S10 정산 현황
 
 상태: `newUser`, `driverEnabled`, `validationError`, `submitting`, `submitFailed`.
 
-### S04 홈·검색 — 탑승자 (`/`)
+### S04 홈 — 탑승자 (`/`)
 
 | 영역 | 구성 요소 | 상태/동작 |
 |---|---|---|
-| 상단 검색 | 출발 동네/현재 위치, 회사 근무지, 시간대 요약 입력 | 기존 로고/프로필 상단 바를 대체합니다. 입력 focus 또는 수정 CTA 선택 시 검색 sheet를 엽니다. |
-| 지도 | 검색 조건 또는 내 위치/동네 중심 지도, 주변 회사행 카풀 marker | 승인 전 marker는 대략 위치와 `pickupLabel`만 표시 |
-| 검색 sheet | 출발 시간대, 회사 근무지, 반경 | 기본 반경 3km, 최대 10km. 적용 시 같은 화면에서 marker/card를 갱신합니다. |
+| 상단 안내 | “집 주변 회사행 카풀” 제목, 현재 동네/위치 사용 CTA | 검색 입력을 제공하지 않습니다. 위치 CTA는 권한 요청 또는 동네 fallback만 담당합니다. |
+| 지도 | 집/동네 또는 현재 위치 중심 지도, 주변 회사행 카풀 marker | 승인 전 marker는 대략 위치와 `pickupLabel`만 표시 |
 | 제공자 카드 | 차주 이름, 평점, 표시용 출발 위치, 출발 시간, 잔여 좌석 | 카드 선택 시 S07 이동 |
 | 빈 상태 | 주변 카풀 없음 | 반경 확대 또는 차주 등록 유도 |
 | 하단 탭 | 홈, 기록, 채팅, 프로필 | Mobile 고정, Desktop은 사이드 내비로 전환. `기록`은 검색이 아니라 운행/정산 이력으로 이동 |
 
-상태: `emptyRecurring`, `hasRecurring`, `searchReady`, `searchEditing`, `searchLoading`, `searchError`, `notificationReceived`.
+상태: `emptyNearby`, `hasNearby`, `locationReady`, `locationDenied`, `loading`, `loadError`, `notificationReceived`.
 
 ### S05 홈 — 차주 (`/driver`)
 
@@ -166,15 +164,15 @@ S10 정산 현황
 
 상태: `noRide`, `openRide`, `requestPending`, `matched`, `inProgress`, `cancelled`, `createFailed`.
 
-### S06 매칭 검색 결과 (`/matchings`)
+### S06 주변 카풀 목록 (`/matchings`)
 
 | 영역 | 구성 요소 | 상태/동작 |
 |---|---|---|
-| 호환 라우팅 | query string 검색 조건 | 공유 링크 또는 기존 `/matchings` 진입 시 S04와 동일한 검색 결과 UI를 표시합니다. |
-| 결과 UI | S04 지도/검색 sheet/카드 rail 재사용 | 별도 독립 검색 화면을 새로 만들지 않습니다. |
-| 빈 상태 | 조건 완화 안내 | 필터 초기화 버튼 제공 |
+| 호환 라우팅 | 위치/동네 기준 조회 | 공유 링크 또는 기존 `/matchings` 진입 시 S04와 동일한 주변 카풀 UI를 표시합니다. |
+| 결과 UI | S04 지도/카드 rail 재사용 | 별도 독립 검색 화면을 새로 만들지 않습니다. |
+| 빈 상태 | 주변 카풀 없음 | 반경 확대 또는 차주 등록 유도 |
 
-상태: `loading`, `hasResults`, `emptyResults`, `requesting`, `requestSuccess`, `requestFailed`.
+상태: `loading`, `hasNearby`, `emptyNearby`, `requesting`, `requestSuccess`, `requestFailed`.
 
 ### S07 매칭 상세 (`/matchings/:id`)
 
