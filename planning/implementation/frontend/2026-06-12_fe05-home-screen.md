@@ -1,6 +1,6 @@
 # 홈 화면 개발 기획서
 
-> **docs#44 이후 상태:** 이 계획서는 기존 “초대 코드 가입 완료 사용자” 표현을 포함한 과거 계획서입니다. 구현 전 최신 SSoT인 `docs/design/SCREENS.md`, `docs/api/AUTH.md` 기준으로 가입 코드 + 회사 이메일 검증 + OAuth 온보딩 완료 사용자를 전제로 새 Case ID 레지스트리를 확인해야 합니다. 구식 계획 그대로 구현하면 `BLOCKED`입니다.
+> **Superseded:** 이 계획서는 검색 입력 기반 홈을 전제로 한 과거 계획서입니다. 집 주변 카풀만 보여주고 선택해서 회사까지 가는 현재 홈 구현은 `docs/planning/implementation/frontend/2026-06-23_fe-nearby-home-selection.md`를 기준으로 진행합니다. 이 문서의 검색 입력, 검색 탭, `/matchings` 검색 query 라우팅 요구사항을 그대로 구현하면 `BLOCKED`입니다.
 
 ## 개요
 
